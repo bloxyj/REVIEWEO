@@ -53,8 +53,6 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     }
 
     const fullUrl = `${API_BASE_URL}${path}`;
-    console.log(`🚀 [API CALL] ${method} ${fullUrl}`);
-    if (options.body) console.log(`📦 [BODY]:`, JSON.stringify(options.body));
 
     const response = await fetch(fullUrl, {
         method,
@@ -63,23 +61,19 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     });
 
     const raw = await response.text();
-    
-    console.log(`📥 [SERVER RESPONSE] Status: ${response.status}`);
 
     let payload: ApiEnvelope<T> | null = null;
 
     if (raw.trim() !== '') {
         try {
             payload = JSON.parse(raw) as ApiEnvelope<T>;
-        } catch (e) {
-            console.error("❌ ERREUR JSON (Le serveur a renvoyé du texte non-JSON) :", raw);
+        } catch {
             throw new Error(`Le serveur a renvoyé une erreur formatée en HTML (Status ${response.status})`);
         }
     }
 
     if (!response.ok) {
         const message = payload && 'message' in payload ? payload.message : `Request failed (${response.status})`;
-        console.error(`❌ [ERREUR SERVEUR]:`, message);
         throw new Error(message);
     }
 
@@ -88,7 +82,6 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     }
 
     if (!payload.success) {
-        console.error(`❌ [SUCCESS FALSE]:`, payload.message);
         throw new Error(payload.message || 'Request failed.');
     }
 
