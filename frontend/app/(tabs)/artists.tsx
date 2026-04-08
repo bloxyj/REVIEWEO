@@ -60,18 +60,29 @@ const styles = StyleSheet.create({
         color: '#000000',
         fontSize: 22,
         fontWeight: '700',
+        paddingBottom: 10,
     },
     text: {
         color: '#000000',
     },
     card: {
         borderWidth: 1,
+        backgroundColor: '#ffffff',
         borderColor: '#000000',
         padding: 10,
         gap: 4,
+        borderRadius: 6,
+
     },
     link: {
         color: '#000000',
         textDecorationLine: 'underline',
+        fontSize: 15,
+        borderColor: '#000000',
+        borderWidth: 1,
+        padding: 6,
+        borderRadius: 4,
+        alignSelf: 'flex-start',
+
     },
 });

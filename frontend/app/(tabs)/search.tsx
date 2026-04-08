@@ -107,6 +107,7 @@ const styles = StyleSheet.create({
         color: '#000000',
         fontSize: 22,
         fontWeight: '700',
+        paddingBottom: 10,
     },
     subtitle: {
         color: '#000000',

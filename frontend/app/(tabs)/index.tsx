@@ -6,11 +6,11 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 export default function HomeScreen() {
     const { session, clearSession } = useAuth();
 
+
+
     return (
         <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>REVIEWEO</Text>
-        <Text style={styles.text}>Minimal cross-platform frontend (mobile + web).</Text>
-        <Text style={styles.text}>API routes are connected to the backend.</Text>
 
         <View style={styles.section}>
             <Text style={styles.sectionTitle}>Session</Text>
@@ -67,6 +67,7 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: '700',
         color: '#000000',
+        paddingBottom: 10,
     },
     text: {
         color: '#000000',
@@ -77,6 +78,7 @@ const styles = StyleSheet.create({
         borderColor: '#000000',
         padding: 12,
         gap: 8,
+        borderRadius: 6,
     },
     sectionTitle: {
         color: '#000000',

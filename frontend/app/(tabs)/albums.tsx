@@ -81,6 +81,7 @@ const styles = StyleSheet.create({
         color: '#000000',
         fontSize: 22,
         fontWeight: '700',
+        paddingBottom: 10,
     },
     text: {
         color: '#000000',
@@ -100,5 +101,11 @@ const styles = StyleSheet.create({
     link: {
         color: '#000000',
         textDecorationLine: 'underline',
+        fontSize: 15,
+        borderColor: '#000000',
+        borderWidth: 1,
+        padding: 6,
+        borderRadius: 4,
+        alignSelf: 'flex-start',
     },
 });
