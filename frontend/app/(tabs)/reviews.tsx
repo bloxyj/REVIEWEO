@@ -4,7 +4,7 @@ import { listReviews, toggleReviewLike } from '@/lib/api';
 import type { Review } from '@/lib/types';
 import { Link } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 export default function ReviewsScreen() {
     const { session } = useAuth();
@@ -45,10 +45,15 @@ export default function ReviewsScreen() {
         loadReviews();
     }, []);
 
+    const mobileRefreshControl =
+        Platform.OS === 'web' ? undefined : <RefreshControl refreshing={loading} onRefresh={loadReviews} />;
+
     return (
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView contentContainerStyle={styles.container} refreshControl={mobileRefreshControl}>
         <Text style={styles.title}>Reviews</Text>
-        <LiquidGlassButton label="Refresh" variant="secondary" size="sm" onPress={loadReviews} />
+        {Platform.OS === 'web' ? (
+            <LiquidGlassButton label="Refresh" variant="secondary" size="sm" onPress={loadReviews} />
+        ) : null}
 
         {loading ? <Text style={styles.text}>Loading...</Text> : null}
         {error ? <Text style={styles.text}>{error}</Text> : null}

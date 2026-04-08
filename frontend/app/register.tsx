@@ -1,13 +1,16 @@
 import { useAuth } from '@/context/auth-context';
+import { BackNavButton } from '@/components/navigation/BackNavButton';
 import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
 import { register } from '@/lib/api';
 import { Link, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function RegisterScreen() {
     const router = useRouter();
     const { setSession } = useAuth();
+    const emailInputRef = useRef<TextInput | null>(null);
+    const passwordInputRef = useRef<TextInput | null>(null);
 
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
@@ -32,6 +35,7 @@ export default function RegisterScreen() {
 
     return (
         <View style={styles.container}>
+        <BackNavButton />
         <Text style={styles.title}>Register</Text>
 
         <TextInput
@@ -39,23 +43,31 @@ export default function RegisterScreen() {
             onChangeText={setUsername}
             placeholder="Username"
             autoCapitalize="none"
+            returnKeyType="next"
+            onSubmitEditing={() => emailInputRef.current?.focus()}
             style={styles.input}
         />
 
         <TextInput
+            ref={emailInputRef}
             value={email}
             onChangeText={setEmail}
             placeholder="Email"
             autoCapitalize="none"
             keyboardType="email-address"
+            returnKeyType="next"
+            onSubmitEditing={() => passwordInputRef.current?.focus()}
             style={styles.input}
         />
 
         <TextInput
+            ref={passwordInputRef}
             value={password}
             onChangeText={setPassword}
             placeholder="Password (min 6 chars)"
             secureTextEntry
+            returnKeyType="done"
+            onSubmitEditing={onSubmit}
             style={styles.input}
         />
 

@@ -12,7 +12,7 @@ import {
 import type { AuthUser, Review } from '@/lib/types';
 import { Link } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Platform, RefreshControl, ScrollView, StyleSheet, Text, View, Alert } from 'react-native';
+import { Alert, Platform, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 export default function AdminScreen() {
     const { session, isAdmin } = useAuth();
@@ -48,9 +48,6 @@ export default function AdminScreen() {
     useEffect(() => {
         loadData();
     }, [loadData]);
-
-    const mobileRefreshControl =
-        Platform.OS === 'web' ? undefined : <RefreshControl refreshing={loading} onRefresh={loadData} />;
 
     const onUpdateRole = async (user: AuthUser) => {
         const roles: ("user" | "critique" | "admin")[] = ["user", "critique", "admin"];
@@ -103,6 +100,9 @@ export default function AdminScreen() {
         }
     };
 
+    const mobileRefreshControl =
+        Platform.OS === 'web' ? undefined : <RefreshControl refreshing={loading} onRefresh={loadData} />;
+
     if (!session || !isAdmin) {
         return (
             <View style={styles.container}>
@@ -115,15 +115,14 @@ export default function AdminScreen() {
 
     return (
         <ScrollView 
-            contentContainerStyle={styles.container} 
+            contentContainerStyle={styles.container}
             refreshControl={mobileRefreshControl}
         >
             <BackNavButton />
             <Text style={styles.title}>Admin Dashboard</Text>
-            
-            {Platform.OS === 'web' && (
+            {Platform.OS === 'web' ? (
                 <LiquidGlassButton label="Refresh Data" variant="secondary" size="sm" onPress={loadData} />
-            )}
+            ) : null}
 
             {loading && !users.length ? <Text style={styles.text}>Loading...</Text> : null}
             {error ? <Text style={{ color: 'red' }}>{error}</Text> : null}

@@ -1,9 +1,9 @@
-import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
 import { getArtist, getArtistAlbums, getArtistTopTracks } from '@/lib/api';
+import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
 import type { Album, ArtistDetail, ArtistTopTrack } from '@/lib/types';
 import { Link, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 function parseId(input: string | string[] | undefined): number | null {
     if (!input) {
@@ -61,10 +61,15 @@ export default function ArtistDetailScreen() {
         loadData();
     }, [loadData]);
 
+    const mobileRefreshControl =
+        Platform.OS === 'web' ? undefined : <RefreshControl refreshing={loading} onRefresh={loadData} />;
+
     return (
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView contentContainerStyle={styles.container} refreshControl={mobileRefreshControl}>
         <Text style={styles.title}>Artist detail</Text>
-        <LiquidGlassButton label="Refresh" variant="secondary" size="sm" onPress={loadData} />
+        {Platform.OS === 'web' ? (
+            <LiquidGlassButton label="Refresh" variant="secondary" size="sm" onPress={loadData} />
+        ) : null}
 
         {loading ? <Text style={styles.text}>Loading...</Text> : null}
         {error ? <Text style={styles.text}>{error}</Text> : null}

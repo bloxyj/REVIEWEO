@@ -1,9 +1,9 @@
-import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
 import { listAlbums } from '@/lib/api';
+import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
 import type { Album } from '@/lib/types';
 import { Link } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Platform, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function AlbumsScreen() {
     const [albums, setAlbums] = useState<Album[]>([]);
@@ -42,16 +42,27 @@ export default function AlbumsScreen() {
         );
     }, [albums, query]);
 
+    const onSubmitFilter = () => {
+        setQuery((value) => value.trim());
+    };
+
+    const mobileRefreshControl =
+        Platform.OS === 'web' ? undefined : <RefreshControl refreshing={loading} onRefresh={loadAlbums} />;
+
     return (
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView contentContainerStyle={styles.container} refreshControl={mobileRefreshControl}>
         <Text style={styles.title}>Albums</Text>
         <TextInput
             value={query}
             onChangeText={setQuery}
             placeholder="Filter by album or artist"
+            returnKeyType="search"
+            onSubmitEditing={onSubmitFilter}
             style={styles.input}
         />
-        <LiquidGlassButton label="Refresh" variant="secondary" size="sm" onPress={loadAlbums} />
+        {Platform.OS === 'web' ? (
+            <LiquidGlassButton label="Refresh" variant="secondary" size="sm" onPress={loadAlbums} />
+        ) : null}
 
         {loading ? <Text style={styles.text}>Loading...</Text> : null}
         {error ? <Text style={styles.text}>{error}</Text> : null}

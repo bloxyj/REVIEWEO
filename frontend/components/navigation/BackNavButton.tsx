@@ -1,46 +1,23 @@
 import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
-import { router, type Href } from 'expo-router';
-import { Platform, type StyleProp, type ViewStyle } from 'react-native';
+import { type Href, useNavigation, useRouter } from 'expo-router';
 
 type BackNavButtonProps = {
-    label?: string;
     fallbackHref?: Href;
-    style?: StyleProp<ViewStyle>;
+    label?: string;
 };
 
-export function BackNavButton({
-    label = 'Back',
-    fallbackHref = '/',
-    style,
-}: BackNavButtonProps) {
-    const handlePress = () => {
-        if (Platform.OS === 'web') {
-            try {
-                router.back();
-                return;
-            } catch {
-                router.replace(fallbackHref);
-                return;
-            }
-        }
+export function BackNavButton({ fallbackHref = '/', label = 'Back' }: BackNavButtonProps) {
+    const router = useRouter();
+    const navigation = useNavigation();
 
-        if (router.canGoBack()) {
-            router.back();
+    const onPress = () => {
+        if (navigation.canGoBack()) {
+            navigation.goBack();
             return;
         }
 
         router.replace(fallbackHref);
     };
 
-    return (
-        <LiquidGlassButton
-            label={label}
-            variant="secondary"
-            size="sm"
-            onPress={handlePress}
-            accessibilityLabel="Go back"
-            style={style}
-            testID="back-nav-button"
-        />
-    );
+    return <LiquidGlassButton label={label} variant="secondary" size="sm" onPress={onPress} />;
 }

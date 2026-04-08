@@ -1,9 +1,10 @@
 import { useAuth } from '@/context/auth-context';
+import { BackNavButton } from '@/components/navigation/BackNavButton';
 import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
 import { createAlbumReview } from '@/lib/api';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { StyleSheet, Text, TextInput, View, ScrollView, Alert } from 'react-native';
+import { useRef, useState } from 'react';
+import { StyleSheet, Text, TextInput, View, ScrollView, Alert, Platform } from 'react-native';
 
 export default function CreateReviewScreen() {
     const router = useRouter();
@@ -15,11 +16,14 @@ export default function CreateReviewScreen() {
     const [rating, setRating] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const titleInputRef = useRef<TextInput | null>(null);
+    const ratingInputRef = useRef<TextInput | null>(null);
 
     const isCritique = session?.user.role === 'critique';
     if (!isAdmin && !isCritique) {
         return (
             <View style={styles.container}>
+                <BackNavButton />
                 <Text style={styles.title}>Access Denied</Text>
                 <Text style={styles.text}>Only critics and admins can write reviews.</Text>
             </View>
@@ -52,6 +56,7 @@ export default function CreateReviewScreen() {
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
+            <BackNavButton />
             <Text style={styles.title}>Write a Review</Text>
             
             <View style={styles.section}>
@@ -59,21 +64,29 @@ export default function CreateReviewScreen() {
                     value={albumId}
                     onChangeText={setAlbumId}
                     placeholder="Album ID (e.g. 1)"
-                    keyboardType="number-pad"
+                    keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'number-pad'}
+                    returnKeyType="next"
+                    onSubmitEditing={() => titleInputRef.current?.focus()}
                     style={styles.input}
                 />
                 <TextInput
+                    ref={titleInputRef}
                     value={title}
                     onChangeText={setTitle}
                     placeholder="Review Title"
+                    returnKeyType="next"
+                    onSubmitEditing={() => ratingInputRef.current?.focus()}
                     style={styles.input}
                 />
                 <TextInput
+                    ref={ratingInputRef}
                     value={rating}
                     onChangeText={setRating}
                     placeholder="Rating (1-5)"
-                    keyboardType="number-pad"
+                    keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'number-pad'}
                     maxLength={1}
+                    returnKeyType="done"
+                    onSubmitEditing={onSubmit}
                     style={styles.input}
                 />
                 <TextInput

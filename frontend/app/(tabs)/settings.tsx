@@ -22,7 +22,7 @@ export default function HomeScreen() {
             </>
             ) : (
             <>
-                <Text style={styles.text}>You're not logged in.</Text>
+                <Text style={styles.text}>You&apos;re not logged in.</Text>
                 <Link href="/login" style={styles.sessionLink}>
                 Login
                 </Link>

@@ -1,4 +1,5 @@
 import { useAuth } from '@/context/auth-context';
+import { BackNavButton } from '@/components/navigation/BackNavButton';
 import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
 import {
     createAlbumReview,
@@ -11,8 +12,8 @@ import {
 } from '@/lib/api';
 import type { Album, AlbumTrack, Review } from '@/lib/types';
 import { Link, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Platform, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 function parseId(input: string | string[] | undefined): number | null {
     if (!input) {
@@ -43,6 +44,7 @@ export default function AlbumDetailScreen() {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const titleInputRef = useRef<TextInput | null>(null);
 
     const ownReview = useMemo(() => {
         if (!session) {
@@ -166,10 +168,16 @@ export default function AlbumDetailScreen() {
         }
     };
 
+    const mobileRefreshControl =
+        Platform.OS === 'web' ? undefined : <RefreshControl refreshing={loading} onRefresh={loadData} />;
+
     return (
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView contentContainerStyle={styles.container} refreshControl={mobileRefreshControl}>
+        <BackNavButton fallbackHref="/albums" />
         <Text style={styles.title}>Album detail</Text>
-        <LiquidGlassButton label="Refresh" variant="secondary" size="sm" onPress={loadData} />
+        {Platform.OS === 'web' ? (
+            <LiquidGlassButton label="Refresh" variant="secondary" size="sm" onPress={loadData} />
+        ) : null}
 
         {loading ? <Text style={styles.text}>Loading...</Text> : null}
         {error ? <Text style={styles.text}>{error}</Text> : null}
@@ -211,13 +219,18 @@ export default function AlbumDetailScreen() {
                 value={ratingInput}
                 onChangeText={setRatingInput}
                 placeholder="Rating (1-5)"
-                keyboardType="number-pad"
+                keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'number-pad'}
+                returnKeyType="next"
+                onSubmitEditing={() => titleInputRef.current?.focus()}
                 style={styles.input}
                 />
                 <TextInput
+                ref={titleInputRef}
                 value={titleInput}
                 onChangeText={setTitleInput}
                 placeholder="Title (optional)"
+                returnKeyType="done"
+                onSubmitEditing={onSubmit}
                 style={styles.input}
                 />
                 <TextInput

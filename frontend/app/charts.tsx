@@ -1,9 +1,10 @@
+import { BackNavButton } from '@/components/navigation/BackNavButton';
 import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
 import { getCharts } from '@/lib/api';
 import type { ChartResponse } from '@/lib/types';
 import { Link } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function ChartsScreen() {
     const [year, setYear] = useState('');
@@ -36,20 +37,32 @@ export default function ChartsScreen() {
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
+        <BackNavButton />
         <Text style={styles.title}>Charts</Text>
 
         <TextInput
             value={year}
             onChangeText={setYear}
             placeholder="Year (optional)"
-            keyboardType="number-pad"
+            keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'number-pad'}
+            returnKeyType="search"
+            onSubmitEditing={loadCharts}
             style={styles.input}
         />
-        <TextInput value={genre} onChangeText={setGenre} placeholder="Genre (optional)" style={styles.input} />
+        <TextInput
+            value={genre}
+            onChangeText={setGenre}
+            placeholder="Genre (optional)"
+            returnKeyType="search"
+            onSubmitEditing={loadCharts}
+            style={styles.input}
+        />
         <TextInput
             value={releaseType}
             onChangeText={setReleaseType}
             placeholder="release_type (optional)"
+            returnKeyType="search"
+            onSubmitEditing={loadCharts}
             style={styles.input}
         />
 
