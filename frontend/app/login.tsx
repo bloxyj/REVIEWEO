@@ -1,13 +1,15 @@
 import { useAuth } from '@/context/auth-context';
+import { BackNavButton } from '@/components/navigation/BackNavButton';
 import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
 import { login } from '@/lib/api';
 import { Link, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function LoginScreen() {
     const router = useRouter();
     const { setSession } = useAuth();
+    const passwordInputRef = useRef<TextInput | null>(null);
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -31,6 +33,7 @@ export default function LoginScreen() {
 
     return (
         <View style={styles.container}>
+        <BackNavButton />
         <Text style={styles.title}>Login</Text>
 
         <TextInput
@@ -39,14 +42,19 @@ export default function LoginScreen() {
             placeholder="Email"
             autoCapitalize="none"
             keyboardType="email-address"
+            returnKeyType="next"
+            onSubmitEditing={() => passwordInputRef.current?.focus()}
             style={styles.input}
         />
 
         <TextInput
+            ref={passwordInputRef}
             value={password}
             onChangeText={setPassword}
             placeholder="Password"
             secureTextEntry
+            returnKeyType="done"
+            onSubmitEditing={onSubmit}
             style={styles.input}
         />
 

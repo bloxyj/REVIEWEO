@@ -37,7 +37,14 @@ export default function SearchScreen() {
         <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>Search</Text>
 
-        <TextInput value={query} onChangeText={setQuery} placeholder="Search artists or albums" style={styles.input} />
+        <TextInput
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Search artists or albums"
+            returnKeyType="search"
+            onSubmitEditing={onSearch}
+            style={styles.input}
+        />
 
         <View style={styles.row}>
             {SEARCH_TYPES.map((entry) => (

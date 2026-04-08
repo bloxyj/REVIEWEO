@@ -1,9 +1,8 @@
-import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
 import { listArtists } from '@/lib/api';
 import type { Artist } from '@/lib/types';
 import { Link } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 export default function ArtistsScreen() {
     const [artists, setArtists] = useState<Artist[]>([]);
@@ -28,10 +27,12 @@ export default function ArtistsScreen() {
         loadArtists();
     }, []);
 
+    const mobileRefreshControl =
+        Platform.OS === 'web' ? undefined : <RefreshControl refreshing={loading} onRefresh={loadArtists} />;
+
     return (
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView contentContainerStyle={styles.container} refreshControl={mobileRefreshControl}>
         <Text style={styles.title}>Artists</Text>
-        <LiquidGlassButton label="Refresh" variant="secondary" size="sm" onPress={loadArtists} />
 
         {loading ? <Text style={styles.text}>Loading...</Text> : null}
         {error ? <Text style={styles.text}>{error}</Text> : null}

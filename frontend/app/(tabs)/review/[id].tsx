@@ -1,10 +1,11 @@
 import { useAuth } from '@/context/auth-context';
+import { BackNavButton } from '@/components/navigation/BackNavButton';
 import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
 import { deleteReview, getReview, toggleReviewLike, updateReview } from '@/lib/api';
 import type { Review } from '@/lib/types';
 import { Link, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Platform, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 function parseId(input: string | string[] | undefined): number | null {
     if (!input) {
@@ -34,6 +35,7 @@ export default function ReviewDetailScreen() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const titleInputRef = useRef<TextInput | null>(null);
 
     const canEdit = session && review && (session.user.id === review.user_id || isAdmin);
 
@@ -124,10 +126,13 @@ export default function ReviewDetailScreen() {
         }
     };
 
+    const mobileRefreshControl =
+        Platform.OS === 'web' ? undefined : <RefreshControl refreshing={loading} onRefresh={loadReview} />;
+
     return (
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView contentContainerStyle={styles.container} refreshControl={mobileRefreshControl}>
+        <BackNavButton fallbackHref="/reviews" />
         <Text style={styles.title}>Review detail</Text>
-        <LiquidGlassButton label="Refresh" variant="secondary" size="sm" onPress={loadReview} />
 
         {loading ? <Text style={styles.text}>Loading...</Text> : null}
         {error ? <Text style={styles.text}>{error}</Text> : null}
@@ -159,12 +164,17 @@ export default function ReviewDetailScreen() {
                 onChangeText={setRatingInput}
                 placeholder="Rating (1-5)"
                 keyboardType="number-pad"
+                returnKeyType="next"
+                onSubmitEditing={() => titleInputRef.current?.focus()}
                 style={styles.input}
             />
             <TextInput
+                ref={titleInputRef}
                 value={titleInput}
                 onChangeText={setTitleInput}
                 placeholder="Title (optional)"
+                returnKeyType="done"
+                onSubmitEditing={onSave}
                 style={styles.input}
             />
             <TextInput

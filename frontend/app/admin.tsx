@@ -1,10 +1,11 @@
 import { useAuth } from '@/context/auth-context';
+import { BackNavButton } from '@/components/navigation/BackNavButton';
 import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
 import { adminDeleteReview, adminPinReview, listAdminUsers, listReviews } from '@/lib/api';
 import type { AuthUser, Review } from '@/lib/types';
 import { Link } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 export default function AdminScreen() {
     const { session, isAdmin } = useAuth();
@@ -41,6 +42,9 @@ export default function AdminScreen() {
         loadData();
     }, [loadData]);
 
+    const mobileRefreshControl =
+        Platform.OS === 'web' ? undefined : <RefreshControl refreshing={loading} onRefresh={loadData} />;
+
     const onTogglePin = async (review: Review) => {
         if (!session || !isAdmin) {
         return;
@@ -70,6 +74,7 @@ export default function AdminScreen() {
     if (!session) {
         return (
         <View style={styles.container}>
+            <BackNavButton />
             <Text style={styles.title}>Admin</Text>
             <Text style={styles.text}>Login required.</Text>
             <Link href="/login" style={styles.link}>
@@ -82,6 +87,7 @@ export default function AdminScreen() {
     if (!isAdmin) {
         return (
         <View style={styles.container}>
+            <BackNavButton />
             <Text style={styles.title}>Admin</Text>
             <Text style={styles.text}>This page is only accessible to admin users.</Text>
         </View>
@@ -89,9 +95,9 @@ export default function AdminScreen() {
     }
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView contentContainerStyle={styles.container} refreshControl={mobileRefreshControl}>
+        <BackNavButton />
         <Text style={styles.title}>Admin</Text>
-        <LiquidGlassButton label="Refresh" variant="secondary" size="sm" onPress={loadData} />
 
         {loading ? <Text style={styles.text}>Loading...</Text> : null}
         {error ? <Text style={styles.text}>{error}</Text> : null}

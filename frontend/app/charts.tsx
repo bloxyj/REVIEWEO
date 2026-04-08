@@ -1,3 +1,4 @@
+import { BackNavButton } from '@/components/navigation/BackNavButton';
 import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
 import { getCharts } from '@/lib/api';
 import type { ChartResponse } from '@/lib/types';
@@ -36,6 +37,7 @@ export default function ChartsScreen() {
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
+        <BackNavButton />
         <Text style={styles.title}>Charts</Text>
 
         <TextInput
@@ -43,13 +45,24 @@ export default function ChartsScreen() {
             onChangeText={setYear}
             placeholder="Year (optional)"
             keyboardType="number-pad"
+            returnKeyType="search"
+            onSubmitEditing={loadCharts}
             style={styles.input}
         />
-        <TextInput value={genre} onChangeText={setGenre} placeholder="Genre (optional)" style={styles.input} />
+        <TextInput
+            value={genre}
+            onChangeText={setGenre}
+            placeholder="Genre (optional)"
+            returnKeyType="search"
+            onSubmitEditing={loadCharts}
+            style={styles.input}
+        />
         <TextInput
             value={releaseType}
             onChangeText={setReleaseType}
             placeholder="release_type (optional)"
+            returnKeyType="search"
+            onSubmitEditing={loadCharts}
             style={styles.input}
         />
 
