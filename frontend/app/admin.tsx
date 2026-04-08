@@ -1,4 +1,5 @@
 import { useAuth } from '@/context/auth-context';
+import { BackNavButton } from '@/components/navigation/BackNavButton';
 import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
 import { 
     adminDeleteReview, 
@@ -11,7 +12,7 @@ import {
 import type { AuthUser, Review } from '@/lib/types';
 import { Link } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, Alert } from 'react-native';
+import { Platform, RefreshControl, ScrollView, StyleSheet, Text, View, Alert } from 'react-native';
 
 export default function AdminScreen() {
     const { session, isAdmin } = useAuth();
@@ -48,6 +49,9 @@ export default function AdminScreen() {
         loadData();
     }, [loadData]);
 
+    const mobileRefreshControl =
+        Platform.OS === 'web' ? undefined : <RefreshControl refreshing={loading} onRefresh={loadData} />;
+
     const onUpdateRole = async (user: AuthUser) => {
         const roles: ("user" | "critique" | "admin")[] = ["user", "critique", "admin"];
         const currentIndex = roles.indexOf(user.role as any);
@@ -56,7 +60,7 @@ export default function AdminScreen() {
         try {
             await adminUpdateUserRole(session!.token, user.id, nextRole);
             await loadData();
-        } catch (e) {
+        } catch {
             setError('Failed to update user role.');
         }
     };
@@ -71,7 +75,7 @@ export default function AdminScreen() {
                     try {
                         await adminDeleteUser(session!.token, user.id);
                         await loadData();
-                    } catch (e) {
+                    } catch {
                         setError('Failed to delete user.');
                     }
                 } 
@@ -84,7 +88,7 @@ export default function AdminScreen() {
         try {
             await adminPinReview(session.token, review.id, review.is_pinned !== 1);
             await loadData();
-        } catch (pinError) {
+        } catch {
             setError('Pin action failed.');
         }
     };
@@ -94,7 +98,7 @@ export default function AdminScreen() {
         try {
             await adminDeleteReview(session.token, reviewId);
             await loadData();
-        } catch (deleteError) {
+        } catch {
             setError('Delete action failed.');
         }
     };
@@ -102,6 +106,7 @@ export default function AdminScreen() {
     if (!session || !isAdmin) {
         return (
             <View style={styles.container}>
+                <BackNavButton />
                 <Text style={styles.title}>Access Denied</Text>
                 <Link href="/login" style={styles.link}>Go to login</Link>
             </View>
@@ -109,16 +114,24 @@ export default function AdminScreen() {
     }
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView 
+            contentContainerStyle={styles.container} 
+            refreshControl={mobileRefreshControl}
+        >
+            <BackNavButton />
             <Text style={styles.title}>Admin Dashboard</Text>
-            <LiquidGlassButton label="Refresh Data" variant="secondary" size="sm" onPress={loadData} />
+            
+            {Platform.OS === 'web' && (
+                <LiquidGlassButton label="Refresh Data" variant="secondary" size="sm" onPress={loadData} />
+            )}
 
-            {loading ? <Text style={styles.text}>Loading...</Text> : null}
+            {loading && !users.length ? <Text style={styles.text}>Loading...</Text> : null}
             {error ? <Text style={{ color: 'red' }}>{error}</Text> : null}
 
             {/* SECTION UTILISATEURS */}
             <View style={styles.card}>
                 <Text style={styles.subtitle}>Users Management</Text>
+                {users.length === 0 && !loading ? <Text style={styles.text}>No users found.</Text> : null}
                 {users.map((user) => {
                     const isMe = session.user?.id === user.id;
                     const isOfficialCritique = user.email === 'critique@revieweo.com';
@@ -161,10 +174,14 @@ export default function AdminScreen() {
             {/* SECTION REVIEWS */}
             <View style={styles.card}>
                 <Text style={styles.subtitle}>Review Moderation</Text>
+                {reviews.length === 0 && !loading ? <Text style={styles.text}>No reviews found.</Text> : null}
                 {reviews.map((review) => (
                     <View key={review.id} style={styles.entry}>
                         <Text style={styles.text}>{review.album_title} - {review.author}</Text>
                         <View style={styles.row}>
+                            <Link href={{ pathname: '/review/[id]', params: { id: String(review.id) } }} style={styles.link}>
+                                View
+                            </Link>
                             <LiquidGlassButton
                                 label={review.is_pinned === 1 ? 'Unpin' : 'Pin'}
                                 variant="toggle"
