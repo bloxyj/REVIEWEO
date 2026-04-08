@@ -59,9 +59,3 @@ export default function TabsLayout() {
     </NativeTabs>
   );
 }
-
-const styles = {
-  container: {
-    flex: 1,
-  },
-};

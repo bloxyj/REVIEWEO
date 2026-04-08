@@ -11,6 +11,16 @@ export default function RootLayout() {
   const insets = useSafeAreaInsets();
 
   const isDesktop = Platform.OS === 'web' && width >= 1024;
+  const tabContentStyle = styles.stackContent;
+  const nonTabContentStyle = !isDesktop
+    ? [
+        styles.stackContent,
+        {
+          paddingTop: insets.top,
+          paddingBottom: insets.bottom,
+        },
+      ]
+    : styles.stackContent;
 
   return (
     <AuthProvider>
@@ -21,23 +31,13 @@ export default function RootLayout() {
           <Stack
             screenOptions={{
               headerShown: false,
-              contentStyle: [
-                styles.stackContent,
-                !isDesktop
-                  ? [
-                      {
-                        paddingTop: Math.max(insets.top, 16),
-                        paddingBottom: Platform.OS === 'ios' ? Math.max(insets.bottom, 16) : 0,
-                      },
-                    ]
-                  : null,
-              ],
+              contentStyle: styles.stackContent,
             }}>
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="login" />
-            <Stack.Screen name="register" />
-            <Stack.Screen name="charts" />
-            <Stack.Screen name="admin" />
+            <Stack.Screen name="(tabs)" options={{ contentStyle: tabContentStyle }} />
+            <Stack.Screen name="login" options={{ contentStyle: nonTabContentStyle }} />
+            <Stack.Screen name="register" options={{ contentStyle: nonTabContentStyle }} />
+            <Stack.Screen name="charts" options={{ contentStyle: nonTabContentStyle }} />
+            <Stack.Screen name="admin" options={{ contentStyle: nonTabContentStyle }} />
           </Stack>
         </View>
       </View>

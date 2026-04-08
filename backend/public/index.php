@@ -44,6 +44,9 @@ function routeRequest(array $segments, string $method, PDO $dbConnection): array
         return [200, [
             'success' => true,
             'message' => 'YAAY! THE REVIEWEO API is running.',
+            'message_from_cat1' => ' /\_/\\',
+            'message_from_cat2' => '( o.o )',
+            'message_from_cat3' => ' > ^ <',
         ]];
     }
 
