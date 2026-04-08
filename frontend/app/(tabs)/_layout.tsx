@@ -1,19 +1,11 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { DesignTokens } from '@/constants/design-system';
 import { Icon, Label, NativeTabs, VectorIcon } from 'expo-router/unstable-native-tabs';
-import { DynamicColorIOS, Platform } from 'react-native';
-
-const iosAdaptiveTint =
-  Platform.OS === 'ios'
-    ? DynamicColorIOS({
-        light: '#111111',
-        dark: '#ffffff',
-      })
-    : '#111111';
 
 export default function TabsLayout() {
   return (
     <NativeTabs
-      tintColor={iosAdaptiveTint}
+      tintColor={DesignTokens.colors.textPrimary}
       minimizeBehavior="onScrollDown"
       disableTransparentOnScrollEdge
     >

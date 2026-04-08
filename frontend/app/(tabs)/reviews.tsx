@@ -1,118 +1,412 @@
-import { useAuth } from '@/context/auth-context';
 import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
+import { ScalePressable } from '@/components/ui/ScalePressable';
+import { DesignTokens } from '@/constants/design-system';
+import { useAuth } from '@/context/auth-context';
 import { listReviews, toggleReviewLike } from '@/lib/api';
+import { getAlbumCoverPlaceholder } from '@/lib/placeholders';
+import { useResponsiveLayout } from '@/lib/responsive';
 import type { Review } from '@/lib/types';
+import { useReducedMotionPreference } from '@/lib/use-reduced-motion';
+import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+
+function getEntering(shouldReduceMotion: boolean, delay: number) {
+  if (shouldReduceMotion) {
+    return undefined;
+  }
+  return FadeInDown.duration(DesignTokens.motion.durationSlow).delay(delay);
+}
+
+function getListEntering(shouldReduceMotion: boolean, baseDelay: number, index: number) {
+  if (index >= 8) {
+    return undefined;
+  }
+  return getEntering(shouldReduceMotion, baseDelay + index * DesignTokens.motion.stagger);
+}
 
 export default function ReviewsScreen() {
-    const { session } = useAuth();
+  const { session } = useAuth();
+  const { isDesktop, contentMaxWidth, horizontalPadding } = useResponsiveLayout();
+  const shouldReduceMotion = useReducedMotionPreference();
 
-    const [reviews, setReviews] = useState<Review[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [likingReviewId, setLikingReviewId] = useState<number | null>(null);
 
-    const loadReviews = async () => {
-        setLoading(true);
-        setError(null);
+  const loadReviews = async () => {
+    setLoading(true);
+    setError(null);
 
-        try {
-        const items = await listReviews({ limit: 200 });
-        setReviews(items);
-        } catch (loadError) {
-        setError(loadError instanceof Error ? loadError.message : 'Could not load reviews.');
-        } finally {
-        setLoading(false);
-        }
-    };
+    try {
+      const items = await listReviews({ limit: 200 });
+      setReviews(items);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'Could not load reviews.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const onLike = async (reviewId: number) => {
-        if (!session) {
-        setError('Login required to like reviews.');
-        return;
-        }
+  const onLike = async (reviewId: number) => {
+    if (!session) {
+      setError('Login required to like reviews.');
+      return;
+    }
 
-        try {
-        await toggleReviewLike(session.token, reviewId);
-        await loadReviews();
-        } catch (likeError) {
-        setError(likeError instanceof Error ? likeError.message : 'Like action failed.');
-        }
-    };
+    setLikingReviewId(reviewId);
 
-    useEffect(() => {
-        loadReviews();
-    }, []);
+    try {
+      await toggleReviewLike(session.token, reviewId);
+      await loadReviews();
+    } catch (likeError) {
+      setError(likeError instanceof Error ? likeError.message : 'Like action failed.');
+    } finally {
+      setLikingReviewId(null);
+    }
+  };
 
-    const mobileRefreshControl =
-        Platform.OS === 'web' ? undefined : <RefreshControl refreshing={loading} onRefresh={loadReviews} />;
+  useEffect(() => {
+    loadReviews();
+  }, []);
 
-    return (
-        <ScrollView contentContainerStyle={styles.container} refreshControl={mobileRefreshControl}>
-        <Text style={styles.title}>Reviews</Text>
-        {Platform.OS === 'web' ? (
-            <LiquidGlassButton label="Refresh" variant="secondary" size="sm" onPress={loadReviews} />
+  const cardWidth = isDesktop ? '48.5%' : '100%';
+
+  const mobileRefreshControl =
+    Platform.OS === 'web' ? undefined : <RefreshControl refreshing={loading} onRefresh={loadReviews} />;
+
+  return (
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={[styles.container, { paddingHorizontal: horizontalPadding }]}
+      refreshControl={mobileRefreshControl}
+    >
+      <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
+        <Animated.View entering={getEntering(shouldReduceMotion, 0)} style={styles.masthead}>
+          <View style={styles.headerRow}>
+            <View style={styles.headerCopy}>
+              <Text style={styles.eyebrow}>Community</Text>
+              <Text style={styles.title}>Reviews</Text>
+              <Text style={styles.subtitle}>Read quick takes, open full notes, and keep likes in sync with your account.</Text>
+            </View>
+            {Platform.OS === 'web' ? (
+              <LiquidGlassButton label="Refresh" variant="secondary" size="sm" onPress={loadReviews} />
+            ) : null}
+          </View>
+
+          {!session ? (
+            <View style={styles.authCard}>
+              <Text style={styles.authText}>Login to like reviews and track your activity.</Text>
+              <Link href="/login" asChild>
+                <ScalePressable contentStyle={styles.authLinkCard}>
+                  <Text style={styles.authLinkText}>Go to login</Text>
+                </ScalePressable>
+              </Link>
+            </View>
+          ) : null}
+        </Animated.View>
+
+        {error ? (
+          <Animated.View entering={getEntering(shouldReduceMotion, 70)} style={styles.errorBanner}>
+            <Text style={styles.errorText}>{error}</Text>
+          </Animated.View>
         ) : null}
 
-        {loading ? <Text style={styles.text}>Loading...</Text> : null}
-        {error ? <Text style={styles.text}>{error}</Text> : null}
-        {!loading && !error && reviews.length === 0 ? <Text style={styles.text}>No reviews found.</Text> : null}
+        {loading ? (
+          <Animated.View entering={getEntering(shouldReduceMotion, 110)} style={styles.loadingState}>
+            <Text style={styles.loadingTitle}>Loading reviews</Text>
+            <Text style={styles.loadingText}>Pulling latest ratings and written notes.</Text>
+          </Animated.View>
+        ) : null}
 
-        {reviews.map((review) => (
-            <View key={review.id} style={styles.card}>
-            <Text style={styles.text}>{review.album_title}</Text>
-            <Text style={styles.text}>{review.artist_name}</Text>
-            <Text style={styles.text}>Author: {review.author}</Text>
-            <Text style={styles.text}>Rating: {review.rating}</Text>
-            {review.content ? <Text style={styles.text}>{review.content}</Text> : null}
-            <Text style={styles.text}>Likes: {review.likes_count}</Text>
+        {!loading && !error && reviews.length === 0 ? (
+          <Animated.View entering={getEntering(shouldReduceMotion, 170)} style={styles.emptyState}>
+            <Text style={styles.emptyTitle}>No reviews found</Text>
+            <Text style={styles.emptyText}>Reviews will appear here once listeners start writing.</Text>
+          </Animated.View>
+        ) : null}
 
-            <View style={styles.row}>
-                <Link href={{ pathname: '/review/[id]', params: { id: String(review.id) } }} style={styles.link}>
-                Open review
-                </Link>
-                <LiquidGlassButton
-                label="Like"
-                variant="secondary"
-                size="sm"
-                onPress={() => onLike(review.id)}
-                />
-            </View>
-            </View>
-        ))}
-        </ScrollView>
-    );
+        {!loading && !error && reviews.length > 0 ? (
+          <View style={styles.reviewGrid}>
+            {reviews.map((review, index) => (
+              <Animated.View
+                key={review.id}
+                entering={getListEntering(shouldReduceMotion, 210, index)}
+              >
+                <View style={[styles.reviewCard, { width: cardWidth }]}>
+                  <Image
+                    source={{ uri: getAlbumCoverPlaceholder(review.album_id, review.album_title, review.artist_name) }}
+                    style={styles.reviewImage}
+                    contentFit="cover"
+                    transition={shouldReduceMotion ? 0 : 170}
+                  />
+                  <View style={styles.reviewBody}>
+                    <Text numberOfLines={1} style={styles.reviewTitle}>
+                      {review.album_title}
+                    </Text>
+                    <Text numberOfLines={1} style={styles.reviewArtist}>
+                      {review.artist_name}
+                    </Text>
+                    <Text style={styles.reviewMeta}>
+                      {review.author} • {new Date(review.created_at).toLocaleDateString()}
+                    </Text>
+                    {review.content ? (
+                      <Text numberOfLines={3} style={styles.reviewContent}>
+                        {review.content}
+                      </Text>
+                    ) : (
+                      <Text style={styles.reviewContent}>No written notes for this rating yet.</Text>
+                    )}
+
+                    <View style={styles.badgeRow}>
+                      <View style={[styles.badge, styles.ratingBadge]}>
+                        <Text style={styles.badgeText}>Rating {review.rating}/5</Text>
+                      </View>
+                      <View style={[styles.badge, styles.likesBadge]}>
+                        <Text style={styles.badgeText}>{review.likes_count.toLocaleString()} likes</Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.actionRow}>
+                      <Link href={{ pathname: '/review/[id]', params: { id: String(review.id) } }} asChild>
+                        <ScalePressable contentStyle={styles.linkCard}>
+                          <Text style={styles.linkText}>Open review</Text>
+                        </ScalePressable>
+                      </Link>
+                      <LiquidGlassButton
+                        label={`Like (${review.likes_count})`}
+                        variant="secondary"
+                        size="sm"
+                        onPress={() => onLike(review.id)}
+                        loading={likingReviewId === review.id}
+                      />
+                    </View>
+                  </View>
+                </View>
+              </Animated.View>
+            ))}
+          </View>
+        ) : null}
+      </View>
+    </ScrollView>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        padding: 16,
-        gap: 10,
-    },
-    title: {
-        color: '#000000',
-        fontSize: 22,
-        fontWeight: '700',
-        paddingBottom: 10,
-    },
-    text: {
-        color: '#000000',
-    },
-    card: {
-        borderWidth: 1,
-        borderColor: '#000000',
-        padding: 10,
-        gap: 4,
-    },
-    row: {
-        flexDirection: 'row',
-        gap: 10,
-        alignItems: 'center',
-        flexWrap: 'wrap',
-    },
-    link: {
-        color: '#000000',
-        textDecorationLine: 'underline',
-    },
+  screen: {
+    flex: 1,
+    backgroundColor: DesignTokens.colors.canvas,
+  },
+  container: {
+    alignItems: 'center',
+    paddingTop: DesignTokens.spacing.lg,
+    paddingBottom: 96,
+  },
+  content: {
+    width: '100%',
+    gap: DesignTokens.spacing.lg,
+  },
+  masthead: {
+    borderWidth: 1,
+    borderColor: DesignTokens.colors.border,
+    borderRadius: DesignTokens.radius.lg,
+    backgroundColor: DesignTokens.colors.surface,
+    padding: DesignTokens.spacing.lg,
+    gap: DesignTokens.spacing.md,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: DesignTokens.spacing.sm,
+    flexWrap: 'wrap',
+  },
+  headerCopy: {
+    gap: 4,
+    flex: 1,
+    minWidth: 220,
+  },
+  eyebrow: {
+    color: DesignTokens.colors.textMuted,
+    fontSize: DesignTokens.typography.meta,
+    fontWeight: '600',
+    letterSpacing: 0.7,
+    textTransform: 'uppercase',
+  },
+  title: {
+    color: DesignTokens.colors.textPrimary,
+    fontSize: DesignTokens.typography.h1,
+    fontWeight: '700',
+    letterSpacing: -0.7,
+  },
+  subtitle: {
+    color: DesignTokens.colors.textSecondary,
+    fontSize: DesignTokens.typography.body,
+    lineHeight: 23,
+    maxWidth: 760,
+  },
+  authCard: {
+    borderWidth: 1,
+    borderColor: DesignTokens.colors.accentBlueSurface,
+    borderRadius: DesignTokens.radius.md,
+    backgroundColor: DesignTokens.colors.accentBlueSurface,
+    padding: DesignTokens.spacing.md,
+    gap: DesignTokens.spacing.xs,
+  },
+  authText: {
+    color: DesignTokens.colors.accentBlueText,
+    fontSize: DesignTokens.typography.bodySmall,
+    lineHeight: 20,
+  },
+  authLinkCard: {
+    borderWidth: 1,
+    borderColor: DesignTokens.colors.border,
+    borderRadius: DesignTokens.radius.sm,
+    backgroundColor: DesignTokens.colors.surface,
+    paddingHorizontal: DesignTokens.spacing.sm,
+    paddingVertical: 8,
+    alignSelf: 'flex-start',
+  },
+  authLinkText: {
+    color: DesignTokens.colors.textPrimary,
+    fontSize: DesignTokens.typography.meta,
+    fontWeight: '600',
+  },
+  errorBanner: {
+    borderWidth: 1,
+    borderColor: DesignTokens.colors.dangerSurface,
+    borderRadius: DesignTokens.radius.md,
+    backgroundColor: DesignTokens.colors.dangerSurface,
+    padding: DesignTokens.spacing.md,
+  },
+  errorText: {
+    color: DesignTokens.colors.dangerText,
+    fontSize: DesignTokens.typography.bodySmall,
+    fontWeight: '500',
+  },
+  loadingState: {
+    borderWidth: 1,
+    borderColor: DesignTokens.colors.border,
+    borderRadius: DesignTokens.radius.md,
+    backgroundColor: DesignTokens.colors.surface,
+    padding: DesignTokens.spacing.lg,
+    gap: 4,
+  },
+  loadingTitle: {
+    color: DesignTokens.colors.textPrimary,
+    fontSize: DesignTokens.typography.body,
+    fontWeight: '700',
+  },
+  loadingText: {
+    color: DesignTokens.colors.textMuted,
+    fontSize: DesignTokens.typography.bodySmall,
+  },
+  emptyState: {
+    borderWidth: 1,
+    borderColor: DesignTokens.colors.border,
+    borderRadius: DesignTokens.radius.md,
+    backgroundColor: DesignTokens.colors.surface,
+    padding: DesignTokens.spacing.lg,
+    gap: 4,
+  },
+  emptyTitle: {
+    color: DesignTokens.colors.textPrimary,
+    fontSize: DesignTokens.typography.body,
+    fontWeight: '600',
+  },
+  emptyText: {
+    color: DesignTokens.colors.textSecondary,
+    fontSize: DesignTokens.typography.bodySmall,
+    lineHeight: 20,
+  },
+  reviewGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: DesignTokens.spacing.sm,
+  },
+  reviewCard: {
+    borderWidth: 1,
+    borderColor: DesignTokens.colors.border,
+    borderRadius: DesignTokens.radius.md,
+    backgroundColor: DesignTokens.colors.surface,
+    overflow: 'hidden',
+  },
+  reviewImage: {
+    width: '100%',
+    aspectRatio: 1.4,
+  },
+  reviewBody: {
+    padding: DesignTokens.spacing.md,
+    gap: 5,
+  },
+  reviewTitle: {
+    color: DesignTokens.colors.textPrimary,
+    fontSize: DesignTokens.typography.h3,
+    fontWeight: '700',
+    letterSpacing: -0.4,
+  },
+  reviewArtist: {
+    color: DesignTokens.colors.textSecondary,
+    fontSize: DesignTokens.typography.body,
+    fontWeight: '500',
+  },
+  reviewMeta: {
+    color: DesignTokens.colors.textMuted,
+    fontSize: DesignTokens.typography.meta,
+  },
+  reviewContent: {
+    color: DesignTokens.colors.textSecondary,
+    fontSize: DesignTokens.typography.bodySmall,
+    lineHeight: 20,
+    marginTop: DesignTokens.spacing.xs,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: DesignTokens.spacing.xs,
+    marginTop: DesignTokens.spacing.xs,
+  },
+  badge: {
+    borderWidth: 1,
+    borderRadius: DesignTokens.radius.sm,
+    paddingHorizontal: DesignTokens.spacing.xs,
+    paddingVertical: 6,
+  },
+  ratingBadge: {
+    borderColor: DesignTokens.colors.accentGreenSurface,
+    backgroundColor: DesignTokens.colors.accentGreenSurface,
+  },
+  likesBadge: {
+    borderColor: DesignTokens.colors.accentRoseSurface,
+    backgroundColor: DesignTokens.colors.accentRoseSurface,
+  },
+  badgeText: {
+    color: DesignTokens.colors.textPrimary,
+    fontSize: DesignTokens.typography.meta,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: DesignTokens.spacing.xs,
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    marginTop: DesignTokens.spacing.xs,
+  },
+  linkCard: {
+    borderWidth: 1,
+    borderColor: DesignTokens.colors.border,
+    borderRadius: DesignTokens.radius.sm,
+    backgroundColor: DesignTokens.colors.surfaceMuted,
+    paddingHorizontal: DesignTokens.spacing.sm,
+    paddingVertical: 8,
+  },
+  linkText: {
+    color: DesignTokens.colors.textPrimary,
+    fontSize: DesignTokens.typography.meta,
+    fontWeight: '600',
+  },
 });

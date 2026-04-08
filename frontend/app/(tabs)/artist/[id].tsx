@@ -1,145 +1,601 @@
-import { getArtist, getArtistAlbums, getArtistTopTracks } from '@/lib/api';
+import { BackNavButton } from '@/components/navigation/BackNavButton';
 import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
+import { ScalePressable } from '@/components/ui/ScalePressable';
+import { DesignTokens } from '@/constants/design-system';
+import { getArtist, getArtistAlbums, getArtistTopTracks } from '@/lib/api';
+import { getAlbumCoverPlaceholder, getArtistPortraitPlaceholder } from '@/lib/placeholders';
+import { useResponsiveLayout } from '@/lib/responsive';
 import type { Album, ArtistDetail, ArtistTopTrack } from '@/lib/types';
+import { useReducedMotionPreference } from '@/lib/use-reduced-motion';
+import { Image } from 'expo-image';
 import { Link, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Platform, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 function parseId(input: string | string[] | undefined): number | null {
-    if (!input) {
-        return null;
-    }
+  if (!input) {
+    return null;
+  }
 
-    const value = Array.isArray(input) ? input[0] : input;
-    const parsed = Number(value);
+  const value = Array.isArray(input) ? input[0] : input;
+  const parsed = Number(value);
 
-    if (!Number.isInteger(parsed) || parsed < 1) {
-        return null;
-    }
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    return null;
+  }
 
-    return parsed;
+  return parsed;
+}
+
+function getEntering(shouldReduceMotion: boolean, delay: number) {
+  if (shouldReduceMotion) {
+    return undefined;
+  }
+  return FadeInDown.duration(DesignTokens.motion.durationSlow).delay(delay);
+}
+
+function getListEntering(shouldReduceMotion: boolean, baseDelay: number, index: number) {
+  if (index >= 8) {
+    return undefined;
+  }
+  return getEntering(shouldReduceMotion, baseDelay + index * DesignTokens.motion.stagger);
+}
+
+function prettifyLabel(value: string): string {
+  return value
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
 export default function ArtistDetailScreen() {
-    const params = useLocalSearchParams<{ id?: string | string[] }>();
-    const artistId = parseId(params.id);
+  const params = useLocalSearchParams<{ id?: string | string[] }>();
+  const artistId = parseId(params.id);
+  const { isDesktop, isTablet, contentMaxWidth, horizontalPadding } = useResponsiveLayout();
+  const shouldReduceMotion = useReducedMotionPreference();
 
-    const [artist, setArtist] = useState<ArtistDetail | null>(null);
-    const [albums, setAlbums] = useState<Album[]>([]);
-    const [topTracks, setTopTracks] = useState<ArtistTopTrack[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+  const [artist, setArtist] = useState<ArtistDetail | null>(null);
+  const [albums, setAlbums] = useState<Album[]>([]);
+  const [topTracks, setTopTracks] = useState<ArtistTopTrack[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-    const loadData = useCallback(async () => {
-        if (!artistId) {
-        setError('Invalid artist id.');
-        setLoading(false);
-        return;
-        }
+  const summaryEntries = useMemo(() => {
+    if (!artist) {
+      return [];
+    }
 
-        setLoading(true);
-        setError(null);
+    return Object.entries(artist.discography_summary)
+      .filter(([, value]) => value !== null && value !== undefined && String(value).trim() !== '')
+      .map(([key, value]) => ({
+        label: prettifyLabel(key),
+        value: typeof value === 'number' ? value.toLocaleString() : String(value),
+      }));
+  }, [artist]);
 
-        try {
-        const [artistPayload, albumsPayload, tracksPayload] = await Promise.all([
-            getArtist(artistId),
-            getArtistAlbums(artistId, { limit: 50 }),
-            getArtistTopTracks(artistId, 10),
-        ]);
+  const albumCardWidth = isDesktop ? '49%' : isTablet ? '48.5%' : '100%';
+  const trackCardWidth = isDesktop ? '49%' : isTablet ? '48.5%' : '100%';
 
-        setArtist(artistPayload);
-        setAlbums(albumsPayload);
-        setTopTracks(tracksPayload);
-        } catch (loadError) {
-        setError(loadError instanceof Error ? loadError.message : 'Could not load artist details.');
-        } finally {
-        setLoading(false);
-        }
-    }, [artistId]);
+  const loadData = useCallback(async () => {
+    if (!artistId) {
+      setError('Invalid artist id.');
+      setLoading(false);
+      return;
+    }
 
-    useEffect(() => {
-        loadData();
-    }, [loadData]);
+    setLoading(true);
+    setError(null);
 
-    const mobileRefreshControl =
-        Platform.OS === 'web' ? undefined : <RefreshControl refreshing={loading} onRefresh={loadData} />;
+    try {
+      const [artistPayload, albumsPayload, tracksPayload] = await Promise.all([
+        getArtist(artistId),
+        getArtistAlbums(artistId, { limit: 50 }),
+        getArtistTopTracks(artistId, 10),
+      ]);
 
-    return (
-        <ScrollView contentContainerStyle={styles.container} refreshControl={mobileRefreshControl}>
-        <Text style={styles.title}>Artist detail</Text>
-        {Platform.OS === 'web' ? (
+      setArtist(artistPayload);
+      setAlbums(albumsPayload);
+      setTopTracks(tracksPayload);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'Could not load artist details.');
+    } finally {
+      setLoading(false);
+    }
+  }, [artistId]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const mobileRefreshControl =
+    Platform.OS === 'web' ? undefined : <RefreshControl refreshing={loading} onRefresh={loadData} />;
+
+  return (
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={[styles.container, { paddingHorizontal: horizontalPadding }]}
+      refreshControl={mobileRefreshControl}
+    >
+      <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
+        <Animated.View entering={getEntering(shouldReduceMotion, 0)} style={styles.topBar}>
+          <BackNavButton fallbackHref="/artists" label="Back to artists" />
+          {Platform.OS === 'web' ? (
             <LiquidGlassButton label="Refresh" variant="secondary" size="sm" onPress={loadData} />
+          ) : null}
+        </Animated.View>
+
+        {error ? (
+          <Animated.View entering={getEntering(shouldReduceMotion, 40)} style={styles.errorBanner}>
+            <Text style={styles.errorText}>{error}</Text>
+          </Animated.View>
         ) : null}
 
-        {loading ? <Text style={styles.text}>Loading...</Text> : null}
-        {error ? <Text style={styles.text}>{error}</Text> : null}
-
-        {artist ? (
-            <View style={styles.card}>
-            <Text style={styles.text}>{artist.name}</Text>
-            <Text style={styles.text}>Followers: {artist.followers}</Text>
-            <Text style={styles.text}>Genres: {artist.genres.map((genre) => genre.name).join(', ') || 'n/a'}</Text>
-            <Text style={styles.text}>Related: {artist.related_artists.map((related) => related.name).join(', ') || 'n/a'}</Text>
-            </View>
+        {loading ? (
+          <Animated.View entering={getEntering(shouldReduceMotion, 80)} style={styles.loadingState}>
+            <Text style={styles.loadingTitle}>Loading artist profile</Text>
+            <Text style={styles.loadingText}>Gathering albums, context, and top tracks.</Text>
+          </Animated.View>
         ) : null}
 
-        <View style={styles.card}>
-            <Text style={styles.subtitle}>Albums</Text>
-            {albums.length === 0 ? <Text style={styles.text}>No albums found.</Text> : null}
-            {albums.map((album) => (
-            <View key={album.id} style={styles.row}>
-                <Text style={styles.text}>
-                {album.title} ({album.release_year})
-                </Text>
-                <Link href={{ pathname: '/album/[id]', params: { id: String(album.id) } }} style={styles.link}>
-                Open album
-                </Link>
-            </View>
-            ))}
-        </View>
+        {!loading && artist ? (
+          <>
+            <Animated.View entering={getEntering(shouldReduceMotion, 120)} style={styles.section}>
+              <View style={[styles.heroCard, isDesktop ? styles.heroDesktop : styles.heroMobile]}>
+                <Image
+                  source={{ uri: getArtistPortraitPlaceholder(artist.id, artist.name) }}
+                  style={[styles.heroImage, isDesktop ? styles.heroImageDesktop : null]}
+                  contentFit="cover"
+                  transition={shouldReduceMotion ? 0 : 220}
+                />
 
-        <View style={styles.card}>
-            <Text style={styles.subtitle}>Top tracks</Text>
-            {topTracks.length === 0 ? <Text style={styles.text}>No tracks found.</Text> : null}
-            {topTracks.map((track) => (
-            <Text key={track.id} style={styles.text}>
-                {track.title} - {track.album_title}
-            </Text>
-            ))}
-        </View>
-        </ScrollView>
-    );
+                <View style={styles.heroBody}>
+                  <Text style={styles.heroEyebrow}>Artist profile</Text>
+                  <Text style={styles.heroTitle}>{artist.name}</Text>
+
+                  <View style={styles.heroMetaStack}>
+                    <Text style={styles.heroMetaText}>{artist.followers.toLocaleString()} followers</Text>
+                    {artist.current_location ? (
+                      <Text style={styles.heroMetaText}>Based in {artist.current_location}</Text>
+                    ) : null}
+                    {artist.birth_location ? <Text style={styles.heroMetaText}>From {artist.birth_location}</Text> : null}
+                    {artist.birth_date ? <Text style={styles.heroMetaText}>Born {artist.birth_date}</Text> : null}
+                  </View>
+
+                  {artist.notes ? <Text style={styles.heroNote}>{artist.notes}</Text> : null}
+
+                  {artist.genres.length > 0 ? (
+                    <View style={styles.genreRow}>
+                      {artist.genres.map((genre) => (
+                        <View key={genre.id} style={styles.genreChip}>
+                          <Text style={styles.genreChipText}>{genre.name}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  ) : (
+                    <Text style={styles.heroMuted}>No genres tagged yet.</Text>
+                  )}
+
+                  {artist.aliases.length > 0 ? (
+                    <Text style={styles.heroMuted}>
+                      Also known as {artist.aliases.map((alias) => alias.alias_name).join(', ')}
+                    </Text>
+                  ) : null}
+
+                  {artist.memberships.length > 0 ? (
+                    <Text style={styles.heroMuted}>
+                      Member of {artist.memberships.map((membership) => membership.group_name).join(', ')}
+                    </Text>
+                  ) : null}
+                </View>
+              </View>
+            </Animated.View>
+
+            <Animated.View entering={getEntering(shouldReduceMotion, 180)} style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Discography summary</Text>
+                <Text style={styles.sectionMeta}>Snapshot from catalog metadata</Text>
+              </View>
+
+              {summaryEntries.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyTitle}>No summary available</Text>
+                  <Text style={styles.emptyText}>Discography totals will appear once metadata is enriched.</Text>
+                </View>
+              ) : (
+                <View style={styles.summaryGrid}>
+                  {summaryEntries.map((entry, index) => (
+                    <Animated.View
+                      key={entry.label}
+                      entering={getListEntering(shouldReduceMotion, 220, index)}
+                    >
+                      <View style={styles.summaryCard}>
+                        <Text style={styles.summaryLabel}>{entry.label}</Text>
+                        <Text style={styles.summaryValue}>{entry.value}</Text>
+                      </View>
+                    </Animated.View>
+                  ))}
+                </View>
+              )}
+            </Animated.View>
+
+            <Animated.View entering={getEntering(shouldReduceMotion, 240)} style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Albums</Text>
+                <Text style={styles.sectionMeta}>{albums.length} releases</Text>
+              </View>
+
+              {albums.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyTitle}>No albums found</Text>
+                  <Text style={styles.emptyText}>This artist does not have indexed releases yet.</Text>
+                </View>
+              ) : (
+                <View style={styles.albumGrid}>
+                  {albums.map((album, index) => (
+                    <Animated.View
+                      key={album.id}
+                      entering={getListEntering(shouldReduceMotion, 280, index)}
+                    >
+                      <Link href={{ pathname: '/album/[id]', params: { id: String(album.id) } }} asChild>
+                        <ScalePressable contentStyle={[styles.albumCard, { width: albumCardWidth }]}>
+                          <Image
+                            source={{ uri: getAlbumCoverPlaceholder(album.id, album.title, album.artist_name) }}
+                            style={styles.albumImage}
+                            contentFit="cover"
+                            transition={shouldReduceMotion ? 0 : 180}
+                          />
+                          <View style={styles.albumBody}>
+                            <Text numberOfLines={1} style={styles.albumTitle}>
+                              {album.title}
+                            </Text>
+                            <Text style={styles.albumMeta}>
+                              {album.release_year} • {album.release_type}
+                            </Text>
+                            <Text style={styles.albumHint}>Open album</Text>
+                          </View>
+                        </ScalePressable>
+                      </Link>
+                    </Animated.View>
+                  ))}
+                </View>
+              )}
+            </Animated.View>
+
+            <Animated.View entering={getEntering(shouldReduceMotion, 320)} style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Top tracks</Text>
+                <Text style={styles.sectionMeta}>{topTracks.length} highlights</Text>
+              </View>
+
+              {topTracks.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyTitle}>No tracks found</Text>
+                  <Text style={styles.emptyText}>Top-track ranking data is not available yet.</Text>
+                </View>
+              ) : (
+                <View style={styles.trackGrid}>
+                  {topTracks.map((track, index) => (
+                    <Animated.View
+                      key={track.id}
+                      entering={getListEntering(shouldReduceMotion, 360, index)}
+                    >
+                      <Link href={{ pathname: '/album/[id]', params: { id: String(track.album_id) } }} asChild>
+                        <ScalePressable contentStyle={[styles.trackCard, { width: trackCardWidth }]}>
+                          <Text style={styles.trackTitle}>{track.title}</Text>
+                          <Text style={styles.trackMeta}>
+                            {track.album_title} • {track.release_year}
+                          </Text>
+                          <Text style={styles.trackMeta}>
+                            {track.listeners_k ? `${track.listeners_k.toLocaleString()}k listeners` : 'No listener count'} •{' '}
+                            {track.popularity_score ?? 'n/a'} popularity
+                          </Text>
+                        </ScalePressable>
+                      </Link>
+                    </Animated.View>
+                  ))}
+                </View>
+              )}
+            </Animated.View>
+
+            <Animated.View entering={getEntering(shouldReduceMotion, 400)} style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Related artists</Text>
+                <Text style={styles.sectionMeta}>{artist.related_artists.length} connections</Text>
+              </View>
+
+              {artist.related_artists.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyTitle}>No related artists</Text>
+                  <Text style={styles.emptyText}>Connections appear as the graph gains more data.</Text>
+                </View>
+              ) : (
+                <View style={styles.relatedGrid}>
+                  {artist.related_artists.map((related, index) => (
+                    <Animated.View
+                      key={related.id}
+                      entering={getListEntering(shouldReduceMotion, 440, index)}
+                    >
+                      <Link href={{ pathname: '/artist/[id]', params: { id: String(related.id) } }} asChild>
+                        <ScalePressable contentStyle={styles.relatedCard}>
+                          <Text numberOfLines={1} style={styles.relatedName}>
+                            {related.name}
+                          </Text>
+                          <Text style={styles.relatedMeta}>{related.followers.toLocaleString()} followers</Text>
+                        </ScalePressable>
+                      </Link>
+                    </Animated.View>
+                  ))}
+                </View>
+              )}
+            </Animated.View>
+          </>
+        ) : null}
+      </View>
+    </ScrollView>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        padding: 16,
-        gap: 10,
-    },
-    title: {
-        color: '#000000',
-        fontSize: 22,
-        fontWeight: '700',
-    },
-    subtitle: {
-        color: '#000000',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    text: {
-        color: '#000000',
-    },
-    card: {
-        borderWidth: 1,
-        borderColor: '#000000',
-        padding: 10,
-        gap: 6,
-    },
-    row: {
-        gap: 4,
-    },
-    link: {
-        color: '#000000',
-        textDecorationLine: 'underline',
-    },
+  screen: {
+    flex: 1,
+    backgroundColor: DesignTokens.colors.canvas,
+  },
+  container: {
+    alignItems: 'center',
+    paddingTop: DesignTokens.spacing.lg,
+    paddingBottom: 96,
+  },
+  content: {
+    width: '100%',
+    gap: DesignTokens.spacing.xl,
+  },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: DesignTokens.spacing.sm,
+  },
+  errorBanner: {
+    borderWidth: 1,
+    borderColor: DesignTokens.colors.dangerSurface,
+    borderRadius: DesignTokens.radius.md,
+    backgroundColor: DesignTokens.colors.dangerSurface,
+    padding: DesignTokens.spacing.md,
+  },
+  errorText: {
+    color: DesignTokens.colors.dangerText,
+    fontSize: DesignTokens.typography.bodySmall,
+    fontWeight: '500',
+  },
+  loadingState: {
+    borderWidth: 1,
+    borderColor: DesignTokens.colors.border,
+    borderRadius: DesignTokens.radius.md,
+    backgroundColor: DesignTokens.colors.surface,
+    padding: DesignTokens.spacing.lg,
+    gap: 6,
+  },
+  loadingTitle: {
+    color: DesignTokens.colors.textPrimary,
+    fontSize: DesignTokens.typography.body,
+    fontWeight: '700',
+  },
+  loadingText: {
+    color: DesignTokens.colors.textMuted,
+    fontSize: DesignTokens.typography.bodySmall,
+  },
+  section: {
+    gap: DesignTokens.spacing.md,
+  },
+  sectionHeader: {
+    gap: 2,
+  },
+  sectionTitle: {
+    color: DesignTokens.colors.textPrimary,
+    fontSize: DesignTokens.typography.h2,
+    fontWeight: '700',
+    letterSpacing: -0.5,
+  },
+  sectionMeta: {
+    color: DesignTokens.colors.textMuted,
+    fontSize: DesignTokens.typography.bodySmall,
+  },
+  heroCard: {
+    borderWidth: 1,
+    borderColor: DesignTokens.colors.border,
+    borderRadius: DesignTokens.radius.lg,
+    backgroundColor: DesignTokens.colors.surface,
+    overflow: 'hidden',
+    padding: DesignTokens.spacing.lg,
+    gap: DesignTokens.spacing.lg,
+  },
+  heroDesktop: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+  },
+  heroMobile: {
+    flexDirection: 'column',
+  },
+  heroImage: {
+    width: '100%',
+    aspectRatio: 4 / 5,
+    borderRadius: DesignTokens.radius.md,
+  },
+  heroImageDesktop: {
+    width: 320,
+  },
+  heroBody: {
+    flex: 1,
+    gap: DesignTokens.spacing.sm,
+  },
+  heroEyebrow: {
+    color: DesignTokens.colors.textMuted,
+    fontSize: DesignTokens.typography.meta,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.7,
+  },
+  heroTitle: {
+    color: DesignTokens.colors.textPrimary,
+    fontSize: DesignTokens.typography.h1,
+    fontWeight: '700',
+    lineHeight: 36,
+    letterSpacing: -0.8,
+  },
+  heroMetaStack: {
+    gap: 2,
+  },
+  heroMetaText: {
+    color: DesignTokens.colors.textSecondary,
+    fontSize: DesignTokens.typography.bodySmall,
+  },
+  heroNote: {
+    color: DesignTokens.colors.textSecondary,
+    fontSize: DesignTokens.typography.bodySmall,
+    lineHeight: 21,
+  },
+  heroMuted: {
+    color: DesignTokens.colors.textMuted,
+    fontSize: DesignTokens.typography.meta,
+    lineHeight: 18,
+  },
+  genreRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: DesignTokens.spacing.xs,
+  },
+  genreChip: {
+    borderWidth: 1,
+    borderColor: DesignTokens.colors.accentGreenSurface,
+    borderRadius: DesignTokens.radius.sm,
+    backgroundColor: DesignTokens.colors.accentGreenSurface,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  genreChipText: {
+    color: DesignTokens.colors.accentGreenText,
+    fontSize: DesignTokens.typography.meta,
+    fontWeight: '600',
+  },
+  summaryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: DesignTokens.spacing.sm,
+  },
+  summaryCard: {
+    borderWidth: 1,
+    borderColor: DesignTokens.colors.border,
+    borderRadius: DesignTokens.radius.md,
+    backgroundColor: DesignTokens.colors.surface,
+    padding: DesignTokens.spacing.md,
+    minWidth: 150,
+    gap: 2,
+  },
+  summaryLabel: {
+    color: DesignTokens.colors.textMuted,
+    fontSize: DesignTokens.typography.meta,
+  },
+  summaryValue: {
+    color: DesignTokens.colors.textPrimary,
+    fontSize: DesignTokens.typography.body,
+    fontWeight: '700',
+  },
+  albumGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: DesignTokens.spacing.sm,
+  },
+  albumCard: {
+    borderWidth: 1,
+    borderColor: DesignTokens.colors.border,
+    borderRadius: DesignTokens.radius.md,
+    backgroundColor: DesignTokens.colors.surface,
+    overflow: 'hidden',
+  },
+  albumImage: {
+    width: '100%',
+    aspectRatio: 1,
+  },
+  albumBody: {
+    padding: DesignTokens.spacing.md,
+    gap: 4,
+  },
+  albumTitle: {
+    color: DesignTokens.colors.textPrimary,
+    fontSize: DesignTokens.typography.body,
+    fontWeight: '700',
+  },
+  albumMeta: {
+    color: DesignTokens.colors.textMuted,
+    fontSize: DesignTokens.typography.meta,
+  },
+  albumHint: {
+    color: DesignTokens.colors.textSecondary,
+    fontSize: DesignTokens.typography.meta,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  trackGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: DesignTokens.spacing.sm,
+  },
+  trackCard: {
+    borderWidth: 1,
+    borderColor: DesignTokens.colors.border,
+    borderRadius: DesignTokens.radius.md,
+    backgroundColor: DesignTokens.colors.surface,
+    padding: DesignTokens.spacing.md,
+    gap: 4,
+  },
+  trackTitle: {
+    color: DesignTokens.colors.textPrimary,
+    fontSize: DesignTokens.typography.body,
+    fontWeight: '700',
+  },
+  trackMeta: {
+    color: DesignTokens.colors.textMuted,
+    fontSize: DesignTokens.typography.meta,
+  },
+  relatedGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: DesignTokens.spacing.xs,
+  },
+  relatedCard: {
+    borderWidth: 1,
+    borderColor: DesignTokens.colors.border,
+    borderRadius: DesignTokens.radius.sm,
+    backgroundColor: DesignTokens.colors.surfaceMuted,
+    paddingHorizontal: DesignTokens.spacing.sm,
+    paddingVertical: 10,
+    minWidth: 140,
+    gap: 2,
+  },
+  relatedName: {
+    color: DesignTokens.colors.textPrimary,
+    fontSize: DesignTokens.typography.bodySmall,
+    fontWeight: '700',
+  },
+  relatedMeta: {
+    color: DesignTokens.colors.textMuted,
+    fontSize: DesignTokens.typography.meta,
+  },
+  emptyState: {
+    borderWidth: 1,
+    borderColor: DesignTokens.colors.border,
+    borderRadius: DesignTokens.radius.md,
+    backgroundColor: DesignTokens.colors.surface,
+    padding: DesignTokens.spacing.lg,
+    gap: 6,
+  },
+  emptyTitle: {
+    color: DesignTokens.colors.textPrimary,
+    fontSize: DesignTokens.typography.body,
+    fontWeight: '700',
+  },
+  emptyText: {
+    color: DesignTokens.colors.textMuted,
+    fontSize: DesignTokens.typography.bodySmall,
+  },
 });

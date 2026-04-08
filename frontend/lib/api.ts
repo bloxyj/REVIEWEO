@@ -22,6 +22,11 @@ type RequestOptions = {
     method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
     token?: string;
     body?: unknown;
+    signal?: AbortSignal;
+};
+
+type SignalOptions = {
+    signal?: AbortSignal;
 };
 
 function toQuery(params?: ApiListParams): string {
@@ -58,6 +63,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
         method,
         headers,
         body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+        signal: options.signal,
     });
 
     const raw = await response.text();
@@ -101,7 +107,9 @@ export function logout(token: string): Promise<{ message: string }> {
 }
 
 // --- ARTISTES & ALBUMS ---
-export function listArtists(): Promise<Artist[]> { return request<Artist[]>('/artists'); }
+export function listArtists(options: SignalOptions = {}): Promise<Artist[]> {
+    return request<Artist[]>('/artists', { signal: options.signal });
+}
 export function getArtist(id: number): Promise<ArtistDetail> { return request<ArtistDetail>(`/artists/${id}`); }
 export function getArtistAlbums(id: number, params?: ApiListParams): Promise<Album[]> {
     return request<Album[]>(`/artists/${id}/albums${toQuery(params)}`);
@@ -111,15 +119,23 @@ export function getArtistRelated(id: number): Promise<ArtistRelated[]> { return 
 export function getArtistTopTracks(id: number, limit?: number): Promise<ArtistTopTrack[]> {
     return request<ArtistTopTrack[]>(`/artists/${id}/top-tracks${toQuery({ limit })}`);
 }
-export function listAlbums(params?: ApiListParams): Promise<Album[]> { return request<Album[]>(`/albums${toQuery(params)}`); }
-export function getAlbum(id: number): Promise<Album> { return request<Album>(`/albums/${id}`); }
-export function getAlbumTracks(id: number): Promise<AlbumTrack[]> { return request<AlbumTrack[]>(`/albums/${id}/tracks`); }
+export function listAlbums(params?: ApiListParams, options: SignalOptions = {}): Promise<Album[]> {
+    return request<Album[]>(`/albums${toQuery(params)}`, { signal: options.signal });
+}
+export function getAlbum(id: number, options: SignalOptions = {}): Promise<Album> {
+    return request<Album>(`/albums/${id}`, { signal: options.signal });
+}
+export function getAlbumTracks(id: number, options: SignalOptions = {}): Promise<AlbumTrack[]> {
+    return request<AlbumTrack[]>(`/albums/${id}/tracks`, { signal: options.signal });
+}
 
 // --- REVIEWS ---
-export function listReviews(params?: ApiListParams): Promise<Review[]> { return request<Review[]>(`/reviews${toQuery(params)}`); }
+export function listReviews(params?: ApiListParams, options: SignalOptions = {}): Promise<Review[]> {
+    return request<Review[]>(`/reviews${toQuery(params)}`, { signal: options.signal });
+}
 export function getReview(id: number): Promise<Review> { return request<Review>(`/reviews/${id}`); }
-export function getAlbumReviews(id: number, limit?: number): Promise<Review[]> {
-    return request<Review[]>(`/albums/${id}/reviews${toQuery({ limit })}`);
+export function getAlbumReviews(id: number, limit?: number, options: SignalOptions = {}): Promise<Review[]> {
+    return request<Review[]>(`/albums/${id}/reviews${toQuery({ limit })}`, { signal: options.signal });
 }
 export function createReview(token: string, input: ReviewInput): Promise<Review> {
     return request<Review>('/reviews', { method: 'POST', token, body: input });

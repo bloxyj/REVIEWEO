@@ -1,5 +1,7 @@
+import { DesignTokens } from '@/constants/design-system';
+
 export const Theme = {
-  text: '#000000',
-  background: '#ffffff',
-  border: '#000000',
+  text: DesignTokens.colors.textPrimary,
+  background: DesignTokens.colors.canvas,
+  border: DesignTokens.colors.border,
 } as const;

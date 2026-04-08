@@ -1,120 +1,454 @@
-import { useAuth } from '@/context/auth-context';
 import { BackNavButton } from '@/components/navigation/BackNavButton';
 import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
+import { ScalePressable } from '@/components/ui/ScalePressable';
+import { DesignTokens } from '@/constants/design-system';
+import { useAuth } from '@/context/auth-context';
 import { createAlbumReview } from '@/lib/api';
-import { useRouter } from 'expo-router';
-import { useRef, useState } from 'react';
-import { StyleSheet, Text, TextInput, View, ScrollView, Alert, Platform } from 'react-native';
+import { getAlbumCoverPlaceholder, getUserAvatarPlaceholder } from '@/lib/placeholders';
+import { useResponsiveLayout } from '@/lib/responsive';
+import { useReducedMotionPreference } from '@/lib/use-reduced-motion';
+import { Image } from 'expo-image';
+import { Link, useRouter } from 'expo-router';
+import { useMemo, useRef, useState } from 'react';
+import { Alert, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+
+function getEntering(shouldReduceMotion: boolean, delay: number) {
+  if (shouldReduceMotion) {
+    return undefined;
+  }
+  return FadeInDown.duration(DesignTokens.motion.durationSlow).delay(delay);
+}
 
 export default function CreateReviewScreen() {
-    const router = useRouter();
-    const { session, isAdmin } = useAuth();
+  const router = useRouter();
+  const { session, isAdmin } = useAuth();
+  const { isDesktop, contentMaxWidth, horizontalPadding } = useResponsiveLayout();
+  const shouldReduceMotion = useReducedMotionPreference();
 
-    const [albumId, setAlbumId] = useState('');
-    const [title, setTitle] = useState('');
-    const [content, setContent] = useState('');
-    const [rating, setRating] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const titleInputRef = useRef<TextInput | null>(null);
-    const ratingInputRef = useRef<TextInput | null>(null);
+  const [albumId, setAlbumId] = useState('');
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [rating, setRating] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const titleInputRef = useRef<TextInput | null>(null);
+  const ratingInputRef = useRef<TextInput | null>(null);
+  const contentInputRef = useRef<TextInput | null>(null);
 
-    const isCritique = session?.user.role === 'critique';
-    if (!isAdmin && !isCritique) {
-        return (
-            <View style={styles.container}>
-                <BackNavButton />
-                <Text style={styles.title}>Access Denied</Text>
-                <Text style={styles.text}>Only critics and admins can write reviews.</Text>
-            </View>
-        );
+  const reviewerId = session?.user.id ?? 0;
+  const reviewerName = session?.user.username ?? 'revieweo';
+  const isCritique = session?.user.role === 'critique';
+
+  const parsedAlbumId = Number(albumId);
+  const hasValidAlbumId = Number.isInteger(parsedAlbumId) && parsedAlbumId > 0;
+  const previewTitle = title.trim() === '' ? 'Untitled Review' : title.trim();
+
+  const coverPreview = useMemo(
+    () => getAlbumCoverPlaceholder(hasValidAlbumId ? parsedAlbumId : 0, previewTitle, reviewerName),
+    [hasValidAlbumId, parsedAlbumId, previewTitle, reviewerName]
+  );
+
+  const reviewerPreview = useMemo(
+    () => getUserAvatarPlaceholder(reviewerId, reviewerName),
+    [reviewerId, reviewerName]
+  );
+
+  const onSubmit = async () => {
+    if (loading) {
+      return;
     }
 
-    const onSubmit = async () => {
-        if (!albumId || !title || !content || !rating) {
-            setError('Please fill all fields.');
-            return;
-        }
+    if (!session) {
+      setError('Login required to publish a review.');
+      return;
+    }
 
-        setLoading(true);
-        setError(null);
+    if (!albumId || !title || !content || !rating) {
+      setError('Please fill all fields.');
+      return;
+    }
 
-        try {
-            await createAlbumReview(session!.token, Number(albumId), {
-                title: title.trim(),
-                content: content.trim(),
-                rating: Number(rating),
-            });
-            Alert.alert('Success', 'Your review has been published!');
-            router.replace('/reviews'); 
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to publish review.');
-        } finally {
-            setLoading(false);
-        }
-    };
+    const albumValue = Number(albumId);
+    if (!Number.isInteger(albumValue) || albumValue < 1) {
+      setError('Album ID must be a positive integer.');
+      return;
+    }
 
+    const ratingValue = Number(rating);
+    if (!Number.isInteger(ratingValue) || ratingValue < 1 || ratingValue > 5) {
+      setError('Rating must be an integer between 1 and 5.');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      await createAlbumReview(session.token, albumValue, {
+        title: title.trim(),
+        content: content.trim(),
+        rating: ratingValue,
+      });
+      Alert.alert('Success', 'Your review has been published!');
+      router.replace('/reviews');
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : 'Failed to publish review.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isAdmin && !isCritique) {
     return (
-        <ScrollView contentContainerStyle={styles.container}>
-            <BackNavButton />
-            <Text style={styles.title}>Write a Review</Text>
-            
-            <View style={styles.section}>
-                <TextInput
-                    value={albumId}
-                    onChangeText={setAlbumId}
-                    placeholder="Album ID (e.g. 1)"
-                    keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'number-pad'}
-                    returnKeyType="next"
-                    onSubmitEditing={() => titleInputRef.current?.focus()}
-                    style={styles.input}
-                />
-                <TextInput
-                    ref={titleInputRef}
-                    value={title}
-                    onChangeText={setTitle}
-                    placeholder="Review Title"
-                    returnKeyType="next"
-                    onSubmitEditing={() => ratingInputRef.current?.focus()}
-                    style={styles.input}
-                />
-                <TextInput
-                    ref={ratingInputRef}
-                    value={rating}
-                    onChangeText={setRating}
-                    placeholder="Rating (1-5)"
-                    keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'number-pad'}
-                    maxLength={1}
-                    returnKeyType="done"
-                    onSubmitEditing={onSubmit}
-                    style={styles.input}
-                />
-                <TextInput
-                    value={content}
-                    onChangeText={setContent}
-                    placeholder="Your detailed review..."
-                    multiline
-                    numberOfLines={6}
-                    style={[styles.input, { height: 120, textAlignVertical: 'top' }]}
-                />
+      <ScrollView
+        style={styles.screen}
+        contentContainerStyle={[styles.container, { paddingHorizontal: horizontalPadding }]}
+      >
+        <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
+          <Animated.View entering={getEntering(shouldReduceMotion, 0)} style={styles.topBar}>
+            <BackNavButton fallbackHref="/reviews" label="Back to reviews" />
+          </Animated.View>
 
-                {error ? <Text style={{ color: 'red' }}>{error}</Text> : null}
-
-                <LiquidGlassButton
-                    label={loading ? 'Publishing...' : 'Publish Review'}
-                    variant="primary"
-                    onPress={onSubmit}
-                    loading={loading}
-                />
-            </View>
-        </ScrollView>
+          <Animated.View entering={getEntering(shouldReduceMotion, 60)} style={styles.accessCard}>
+            <Text style={styles.accessTitle}>Access denied</Text>
+            <Text style={styles.accessText}>Only critics and admins can write reviews.</Text>
+            <Link href="/reviews" asChild>
+              <ScalePressable contentStyle={styles.inlineLinkCard} accessibilityRole="link">
+                <Text style={styles.inlineLinkText}>Browse published reviews</Text>
+              </ScalePressable>
+            </Link>
+          </Animated.View>
+        </View>
+      </ScrollView>
     );
+  }
+
+  return (
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={[styles.container, { paddingHorizontal: horizontalPadding }]}
+      keyboardShouldPersistTaps="handled"
+    >
+      <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
+        <Animated.View entering={getEntering(shouldReduceMotion, 0)} style={styles.topBar}>
+          <BackNavButton fallbackHref="/reviews" label="Back to reviews" />
+        </Animated.View>
+
+        <Animated.View entering={getEntering(shouldReduceMotion, 70)} style={styles.section}>
+          <View style={[styles.heroCard, isDesktop ? styles.heroDesktop : styles.heroMobile]}>
+            <Image
+              source={{ uri: coverPreview }}
+              style={[styles.heroImage, isDesktop ? styles.heroImageDesktop : null]}
+              contentFit="cover"
+              transition={shouldReduceMotion ? 0 : 220}
+            />
+            <View style={styles.heroBody}>
+              <Text style={styles.heroEyebrow}>Editorial review</Text>
+              <Text style={styles.heroTitle}>Write a review</Text>
+              <Text style={styles.heroSubtitle}>
+                Publish a full write-up and score for a specific album. Your review will appear immediately in the
+                public feed.
+              </Text>
+
+              <View style={styles.authorRow}>
+                <Image
+                  source={{ uri: reviewerPreview }}
+                  style={styles.authorAvatar}
+                  contentFit="cover"
+                  transition={shouldReduceMotion ? 0 : 120}
+                />
+                <View style={styles.authorBody}>
+                  <Text style={styles.authorName}>{reviewerName}</Text>
+                  <Text style={styles.authorMeta}>{session?.user.role ?? 'critic'}</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </Animated.View>
+
+        {error ? (
+          <Animated.View entering={getEntering(shouldReduceMotion, 120)} style={styles.errorBanner}>
+            <Text style={styles.errorText}>{error}</Text>
+          </Animated.View>
+        ) : null}
+
+        <Animated.View entering={getEntering(shouldReduceMotion, 150)} style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Review form</Text>
+            <Text style={styles.sectionMeta}>All fields are required to publish.</Text>
+          </View>
+
+          <View style={styles.formCard}>
+            <View style={styles.fieldBlock}>
+              <Text style={styles.fieldLabel}>Album ID</Text>
+              <TextInput
+                value={albumId}
+                onChangeText={setAlbumId}
+                placeholder="e.g. 1"
+                placeholderTextColor={DesignTokens.colors.textMuted}
+                accessibilityLabel="Album ID"
+                keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'number-pad'}
+                returnKeyType="next"
+                onSubmitEditing={() => titleInputRef.current?.focus()}
+                style={styles.input}
+              />
+            </View>
+
+            <View style={styles.fieldBlock}>
+              <Text style={styles.fieldLabel}>Review title</Text>
+              <TextInput
+                ref={titleInputRef}
+                value={title}
+                onChangeText={setTitle}
+                placeholder="A concise headline"
+                placeholderTextColor={DesignTokens.colors.textMuted}
+                accessibilityLabel="Review title"
+                returnKeyType="next"
+                onSubmitEditing={() => ratingInputRef.current?.focus()}
+                style={styles.input}
+              />
+            </View>
+
+            <View style={styles.fieldBlock}>
+              <Text style={styles.fieldLabel}>Rating (1-5)</Text>
+              <TextInput
+                ref={ratingInputRef}
+                value={rating}
+                onChangeText={setRating}
+                placeholder="e.g. 4"
+                placeholderTextColor={DesignTokens.colors.textMuted}
+                accessibilityLabel="Rating from 1 to 5"
+                keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'number-pad'}
+                maxLength={1}
+                returnKeyType="next"
+                onSubmitEditing={() => contentInputRef.current?.focus()}
+                style={styles.input}
+              />
+            </View>
+
+            <View style={styles.fieldBlock}>
+              <Text style={styles.fieldLabel}>Review text</Text>
+              <TextInput
+                ref={contentInputRef}
+                value={content}
+                onChangeText={setContent}
+                placeholder="Your full review"
+                placeholderTextColor={DesignTokens.colors.textMuted}
+                accessibilityLabel="Review text"
+                multiline
+                numberOfLines={6}
+                style={[styles.input, styles.textArea]}
+              />
+            </View>
+
+            <View style={styles.formActions}>
+              <LiquidGlassButton
+                label={loading ? 'Publishing...' : 'Publish review'}
+                variant="primary"
+                onPress={onSubmit}
+                loading={loading}
+              />
+
+              <Link href="/reviews" asChild>
+                <ScalePressable contentStyle={styles.inlineLinkCard} accessibilityRole="link">
+                  <Text style={styles.inlineLinkText}>Cancel</Text>
+                </ScalePressable>
+              </Link>
+            </View>
+          </View>
+        </Animated.View>
+      </View>
+    </ScrollView>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: { padding: 16, gap: 12 },
-    title: { fontSize: 22, fontWeight: '700', color: '#000' },
-    text: { color: '#000' },
-    section: { borderWidth: 1, borderColor: '#000', padding: 12, gap: 10 },
-    input: { borderWidth: 1, borderColor: '#000', padding: 10, color: '#000' },
+  screen: {
+    flex: 1,
+    backgroundColor: DesignTokens.colors.canvas,
+  },
+  container: {
+    alignItems: 'center',
+    paddingTop: DesignTokens.spacing.lg,
+    paddingBottom: 96,
+  },
+  content: {
+    width: '100%',
+    gap: DesignTokens.spacing.xl,
+  },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: DesignTokens.spacing.sm,
+  },
+  section: {
+    gap: DesignTokens.spacing.md,
+  },
+  heroCard: {
+    borderWidth: 1,
+    borderColor: DesignTokens.colors.border,
+    borderRadius: DesignTokens.radius.lg,
+    backgroundColor: DesignTokens.colors.surface,
+    overflow: 'hidden',
+    padding: DesignTokens.spacing.lg,
+    gap: DesignTokens.spacing.lg,
+  },
+  heroDesktop: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+  },
+  heroMobile: {
+    flexDirection: 'column',
+  },
+  heroImage: {
+    width: '100%',
+    aspectRatio: 1,
+    borderRadius: DesignTokens.radius.md,
+  },
+  heroImageDesktop: {
+    width: 280,
+  },
+  heroBody: {
+    flex: 1,
+    gap: DesignTokens.spacing.sm,
+  },
+  heroEyebrow: {
+    color: DesignTokens.colors.textMuted,
+    fontSize: DesignTokens.typography.meta,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.7,
+  },
+  heroTitle: {
+    color: DesignTokens.colors.textPrimary,
+    fontSize: DesignTokens.typography.h1,
+    fontWeight: '700',
+    lineHeight: 36,
+    letterSpacing: -0.7,
+  },
+  heroSubtitle: {
+    color: DesignTokens.colors.textSecondary,
+    fontSize: DesignTokens.typography.bodySmall,
+    lineHeight: 22,
+  },
+  authorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: DesignTokens.spacing.sm,
+    marginTop: DesignTokens.spacing.xs,
+  },
+  authorAvatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+  },
+  authorBody: {
+    gap: 1,
+  },
+  authorName: {
+    color: DesignTokens.colors.textPrimary,
+    fontSize: DesignTokens.typography.bodySmall,
+    fontWeight: '700',
+  },
+  authorMeta: {
+    color: DesignTokens.colors.textMuted,
+    fontSize: DesignTokens.typography.meta,
+  },
+  errorBanner: {
+    borderWidth: 1,
+    borderColor: DesignTokens.colors.dangerSurface,
+    borderRadius: DesignTokens.radius.md,
+    backgroundColor: DesignTokens.colors.dangerSurface,
+    padding: DesignTokens.spacing.md,
+  },
+  errorText: {
+    color: DesignTokens.colors.dangerText,
+    fontSize: DesignTokens.typography.bodySmall,
+    fontWeight: '500',
+  },
+  sectionHeader: {
+    gap: 2,
+  },
+  sectionTitle: {
+    color: DesignTokens.colors.textPrimary,
+    fontSize: DesignTokens.typography.h2,
+    fontWeight: '700',
+    letterSpacing: -0.5,
+  },
+  sectionMeta: {
+    color: DesignTokens.colors.textMuted,
+    fontSize: DesignTokens.typography.bodySmall,
+  },
+  formCard: {
+    borderWidth: 1,
+    borderColor: DesignTokens.colors.border,
+    borderRadius: DesignTokens.radius.md,
+    backgroundColor: DesignTokens.colors.surface,
+    padding: DesignTokens.spacing.lg,
+    gap: DesignTokens.spacing.md,
+  },
+  fieldBlock: {
+    gap: 6,
+  },
+  fieldLabel: {
+    color: DesignTokens.colors.textSecondary,
+    fontSize: DesignTokens.typography.bodySmall,
+    fontWeight: '600',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: DesignTokens.colors.border,
+    borderRadius: DesignTokens.radius.sm,
+    backgroundColor: DesignTokens.colors.surfaceMuted,
+    color: DesignTokens.colors.textPrimary,
+    paddingHorizontal: DesignTokens.spacing.sm,
+    paddingVertical: 10,
+    fontSize: DesignTokens.typography.bodySmall,
+  },
+  textArea: {
+    minHeight: 120,
+    textAlignVertical: 'top',
+  },
+  formActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: DesignTokens.spacing.xs,
+    alignItems: 'center',
+  },
+  inlineLinkCard: {
+    borderWidth: 1,
+    borderColor: DesignTokens.colors.border,
+    borderRadius: DesignTokens.radius.sm,
+    backgroundColor: DesignTokens.colors.surfaceMuted,
+    paddingHorizontal: DesignTokens.spacing.sm,
+    paddingVertical: 8,
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  inlineLinkText: {
+    color: DesignTokens.colors.textPrimary,
+    fontSize: DesignTokens.typography.meta,
+    fontWeight: '600',
+  },
+  accessCard: {
+    borderWidth: 1,
+    borderColor: DesignTokens.colors.border,
+    borderRadius: DesignTokens.radius.md,
+    backgroundColor: DesignTokens.colors.surface,
+    padding: DesignTokens.spacing.lg,
+    gap: DesignTokens.spacing.sm,
+  },
+  accessTitle: {
+    color: DesignTokens.colors.textPrimary,
+    fontSize: DesignTokens.typography.h2,
+    fontWeight: '700',
+    letterSpacing: -0.5,
+  },
+  accessText: {
+    color: DesignTokens.colors.textSecondary,
+    fontSize: DesignTokens.typography.bodySmall,
+    lineHeight: 22,
+  },
 });
