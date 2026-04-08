@@ -11,7 +11,7 @@ export const desktopNavLinks: NavLink[] = [
     { label: 'Home', href: '/', matchPatterns: ['/'] },
     { label: 'Artists', href: '/artists', matchPatterns: ['/artists', '/artist'] },
     { label: 'Albums', href: '/albums', matchPatterns: ['/albums', '/album'] },
-    { label: 'Reviews', href: '/reviews', matchPatterns: ['/reviews', '/review'] },
+    { label: 'Settings', href: '/settings', matchPatterns: ['/settings'] },
     { label: 'Search', href: '/search', matchPatterns: ['/search'] },
     { label: 'Charts', href: '/charts', matchPatterns: ['/charts'] },
     { label: 'Admin', href: '/admin', matchPatterns: ['/admin'], adminOnly: true },

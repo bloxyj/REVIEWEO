@@ -14,7 +14,7 @@ export default function TabsLayout() {
   return (
     <NativeTabs
       tintColor={iosAdaptiveTint}
-      minimizeBehavior="never"
+      minimizeBehavior="onScrollDown"
       disableTransparentOnScrollEdge
     >
       <NativeTabs.Trigger name="index">
@@ -41,11 +41,11 @@ export default function TabsLayout() {
         />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="reviews">
-        <Label>Reviews</Label>
+      <NativeTabs.Trigger name="settings">
+        <Label>Settings</Label>
         <Icon
-          sf={{ default: 'text.bubble', selected: 'text.bubble.fill' }}
-          androidSrc={<VectorIcon family={MaterialIcons} name="rate-review" />}
+          sf={{ default: 'gear', selected: 'gear' }}
+          androidSrc={<VectorIcon family={MaterialIcons} name="settings" />}
         />
       </NativeTabs.Trigger>
 

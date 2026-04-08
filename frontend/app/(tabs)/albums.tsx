@@ -97,6 +97,7 @@ const styles = StyleSheet.create({
         borderColor: '#000000',
         padding: 10,
         gap: 4,
+        borderRadius: 6,
     },
     link: {
         color: '#000000',
