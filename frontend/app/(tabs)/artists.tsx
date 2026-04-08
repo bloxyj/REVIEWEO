@@ -1,4 +1,5 @@
 import { listArtists } from '@/lib/api';
+import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
 import type { Artist } from '@/lib/types';
 import { Link } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -33,6 +34,9 @@ export default function ArtistsScreen() {
     return (
         <ScrollView contentContainerStyle={styles.container} refreshControl={mobileRefreshControl}>
         <Text style={styles.title}>Artists</Text>
+        {Platform.OS === 'web' ? (
+            <LiquidGlassButton label="Refresh" variant="secondary" size="sm" onPress={loadArtists} />
+        ) : null}
 
         {loading ? <Text style={styles.text}>Loading...</Text> : null}
         {error ? <Text style={styles.text}>{error}</Text> : null}

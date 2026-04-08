@@ -51,6 +51,9 @@ export default function ReviewsScreen() {
     return (
         <ScrollView contentContainerStyle={styles.container} refreshControl={mobileRefreshControl}>
         <Text style={styles.title}>Reviews</Text>
+        {Platform.OS === 'web' ? (
+            <LiquidGlassButton label="Refresh" variant="secondary" size="sm" onPress={loadReviews} />
+        ) : null}
 
         {loading ? <Text style={styles.text}>Loading...</Text> : null}
         {error ? <Text style={styles.text}>{error}</Text> : null}

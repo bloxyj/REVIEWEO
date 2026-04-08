@@ -98,6 +98,9 @@ export default function AdminScreen() {
         <ScrollView contentContainerStyle={styles.container} refreshControl={mobileRefreshControl}>
         <BackNavButton />
         <Text style={styles.title}>Admin</Text>
+        {Platform.OS === 'web' ? (
+            <LiquidGlassButton label="Refresh Data" variant="secondary" size="sm" onPress={loadData} />
+        ) : null}
 
         {loading ? <Text style={styles.text}>Loading...</Text> : null}
         {error ? <Text style={styles.text}>{error}</Text> : null}

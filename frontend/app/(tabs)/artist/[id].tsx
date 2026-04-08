@@ -1,4 +1,5 @@
 import { getArtist, getArtistAlbums, getArtistTopTracks } from '@/lib/api';
+import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
 import type { Album, ArtistDetail, ArtistTopTrack } from '@/lib/types';
 import { Link, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -66,6 +67,9 @@ export default function ArtistDetailScreen() {
     return (
         <ScrollView contentContainerStyle={styles.container} refreshControl={mobileRefreshControl}>
         <Text style={styles.title}>Artist detail</Text>
+        {Platform.OS === 'web' ? (
+            <LiquidGlassButton label="Refresh" variant="secondary" size="sm" onPress={loadData} />
+        ) : null}
 
         {loading ? <Text style={styles.text}>Loading...</Text> : null}
         {error ? <Text style={styles.text}>{error}</Text> : null}

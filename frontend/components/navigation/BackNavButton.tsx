@@ -12,8 +12,8 @@ export function BackNavButton({ fallbackHref = '/', label = 'Back' }: BackNavBut
 
     const onPress = () => {
         if (navigation.canGoBack()) {
-        navigation.goBack();
-        return;
+            navigation.goBack();
+            return;
         }
 
         router.replace(fallbackHref);

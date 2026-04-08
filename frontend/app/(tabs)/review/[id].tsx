@@ -133,6 +133,9 @@ export default function ReviewDetailScreen() {
         <ScrollView contentContainerStyle={styles.container} refreshControl={mobileRefreshControl}>
         <BackNavButton fallbackHref="/reviews" />
         <Text style={styles.title}>Review detail</Text>
+        {Platform.OS === 'web' ? (
+            <LiquidGlassButton label="Refresh" variant="secondary" size="sm" onPress={loadReview} />
+        ) : null}
 
         {loading ? <Text style={styles.text}>Loading...</Text> : null}
         {error ? <Text style={styles.text}>{error}</Text> : null}
@@ -163,7 +166,7 @@ export default function ReviewDetailScreen() {
                 value={ratingInput}
                 onChangeText={setRatingInput}
                 placeholder="Rating (1-5)"
-                keyboardType="number-pad"
+                keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'number-pad'}
                 returnKeyType="next"
                 onSubmitEditing={() => titleInputRef.current?.focus()}
                 style={styles.input}

@@ -1,4 +1,5 @@
 import { listAlbums } from '@/lib/api';
+import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
 import type { Album } from '@/lib/types';
 import { Link } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
@@ -59,6 +60,9 @@ export default function AlbumsScreen() {
             onSubmitEditing={onSubmitFilter}
             style={styles.input}
         />
+        {Platform.OS === 'web' ? (
+            <LiquidGlassButton label="Refresh" variant="secondary" size="sm" onPress={loadAlbums} />
+        ) : null}
 
         {loading ? <Text style={styles.text}>Loading...</Text> : null}
         {error ? <Text style={styles.text}>{error}</Text> : null}

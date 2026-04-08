@@ -175,6 +175,9 @@ export default function AlbumDetailScreen() {
         <ScrollView contentContainerStyle={styles.container} refreshControl={mobileRefreshControl}>
         <BackNavButton fallbackHref="/albums" />
         <Text style={styles.title}>Album detail</Text>
+        {Platform.OS === 'web' ? (
+            <LiquidGlassButton label="Refresh" variant="secondary" size="sm" onPress={loadData} />
+        ) : null}
 
         {loading ? <Text style={styles.text}>Loading...</Text> : null}
         {error ? <Text style={styles.text}>{error}</Text> : null}
@@ -216,7 +219,7 @@ export default function AlbumDetailScreen() {
                 value={ratingInput}
                 onChangeText={setRatingInput}
                 placeholder="Rating (1-5)"
-                keyboardType="number-pad"
+                keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'number-pad'}
                 returnKeyType="next"
                 onSubmitEditing={() => titleInputRef.current?.focus()}
                 style={styles.input}

@@ -4,7 +4,7 @@ import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
 import { createAlbumReview } from '@/lib/api';
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
-import { StyleSheet, Text, TextInput, View, ScrollView, Alert } from 'react-native';
+import { StyleSheet, Text, TextInput, View, ScrollView, Alert, Platform } from 'react-native';
 
 export default function CreateReviewScreen() {
     const router = useRouter();
@@ -64,7 +64,7 @@ export default function CreateReviewScreen() {
                     value={albumId}
                     onChangeText={setAlbumId}
                     placeholder="Album ID (e.g. 1)"
-                    keyboardType="number-pad"
+                    keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'number-pad'}
                     returnKeyType="next"
                     onSubmitEditing={() => titleInputRef.current?.focus()}
                     style={styles.input}
@@ -83,7 +83,7 @@ export default function CreateReviewScreen() {
                     value={rating}
                     onChangeText={setRating}
                     placeholder="Rating (1-5)"
-                    keyboardType="number-pad"
+                    keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'number-pad'}
                     maxLength={1}
                     returnKeyType="done"
                     onSubmitEditing={onSubmit}

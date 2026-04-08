@@ -4,7 +4,7 @@ import { getCharts } from '@/lib/api';
 import type { ChartResponse } from '@/lib/types';
 import { Link } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function ChartsScreen() {
     const [year, setYear] = useState('');
@@ -44,7 +44,7 @@ export default function ChartsScreen() {
             value={year}
             onChangeText={setYear}
             placeholder="Year (optional)"
-            keyboardType="number-pad"
+            keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'number-pad'}
             returnKeyType="search"
             onSubmitEditing={loadCharts}
             style={styles.input}
