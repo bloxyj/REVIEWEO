@@ -38,9 +38,6 @@ function toQuery(params?: ApiListParams): string {
     return serialized === '' ? '' : `?${serialized}`;
 }
 
-/**
- * FONCTION DE REQUÊTE AVEC DIAGNOSTIC LOGS
- */
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
     const method = options.method ?? 'GET';
     const headers: Record<string, string> = {
@@ -55,7 +52,6 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
         headers.Authorization = `Bearer ${options.token}`;
     }
 
-    // --- LOG DE DIAGNOSTIC (ENVOI) ---
     const fullUrl = `${API_BASE_URL}${path}`;
     console.log(`🚀 [API CALL] ${method} ${fullUrl}`);
     if (options.body) console.log(`📦 [BODY]:`, JSON.stringify(options.body));
@@ -68,7 +64,6 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
     const raw = await response.text();
     
-    // --- LOG DE DIAGNOSTIC (RÉPONSE) ---
     console.log(`📥 [SERVER RESPONSE] Status: ${response.status}`);
 
     let payload: ApiEnvelope<T> | null = null;
@@ -100,7 +95,6 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     return payload.data;
 }
 
-// --- AUTHENTIFICATION ---
 export function register(username: string, email: string, password: string): Promise<AuthPayload> {
     return request<AuthPayload>('/auth/register', { method: 'POST', body: { username, email, password } });
 }
@@ -150,7 +144,6 @@ export function toggleReviewLike(token: string, reviewId: number): Promise<{ rev
     return request<{ review_id: number; liked: boolean; total_likes: number }>(`/likes/${reviewId}`, { method: 'POST', token });
 }
 
-// --- ADMINISTRATION ---
 export function listAdminUsers(token: string): Promise<AuthUser[]> {
     return request<AuthUser[]>('/admin/users', { token });
 }
@@ -163,10 +156,6 @@ export function adminPinReview(token: string, reviewId: number, isPinned: boolea
     return request<Review>(`/admin/pin/${reviewId}`, { method: 'POST', token, body: { is_pinned: isPinned } });
 }
 
-/**
- * MODIFICATION DU RÔLE (ADMIN)
- * NOTE : Si Status 404, vérifie si l'URL doit être /admin/users/${userId}/role
- */
 export function adminUpdateUserRole(token: string, userId: number, role: string): Promise<AuthUser> {
     return request<AuthUser>(`/admin/users/${userId}/role`, {
         method: 'PUT',
@@ -175,9 +164,6 @@ export function adminUpdateUserRole(token: string, userId: number, role: string)
     });
 }
 
-/**
- * SUPPRESSION UTILISATEUR (ADMIN)
- */
 export function adminDeleteUser(token: string, userId: number): Promise<{ message: string }> {
     return request<{ message: string }>(`/admin/users/${userId}`, {
         method: 'DELETE',
@@ -185,7 +171,6 @@ export function adminDeleteUser(token: string, userId: number): Promise<{ messag
     });
 }
 
-// --- AUTRES ---
 export function searchCatalog(query: string, type: SearchType = 'all', limit = 20): Promise<SearchResponse> {
     return request<SearchResponse>(`/search${toQuery({ q: query, type, limit })}`);
 }
