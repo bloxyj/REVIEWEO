@@ -1,10 +1,17 @@
 import { useAuth } from '@/context/auth-context';
 import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
-import { adminDeleteReview, adminPinReview, listAdminUsers, listReviews } from '@/lib/api';
+import { 
+    adminDeleteReview, 
+    adminPinReview, 
+    listAdminUsers, 
+    listReviews, 
+    adminUpdateUserRole, 
+    adminDeleteUser 
+} from '@/lib/api';
 import type { AuthUser, Review } from '@/lib/types';
 import { Link } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, Alert } from 'react-native';
 
 export default function AdminScreen() {
     const { session, isAdmin } = useAuth();
@@ -16,24 +23,24 @@ export default function AdminScreen() {
 
     const loadData = useCallback(async () => {
         if (!session || !isAdmin) {
-        setLoading(false);
-        return;
-    }
+            setLoading(false);
+            return;
+        }
 
-    setLoading(true);
-    setError(null);
+        setLoading(true);
+        setError(null);
 
-    try {
-        const [usersPayload, reviewsPayload] = await Promise.all([
-            listAdminUsers(session.token),
-            listReviews({ limit: 100 }),
-        ]);
-        setUsers(usersPayload);
-        setReviews(reviewsPayload);
+        try {
+            const [usersPayload, reviewsPayload] = await Promise.all([
+                listAdminUsers(session.token),
+                listReviews({ limit: 100 }),
+            ]);
+            setUsers(usersPayload);
+            setReviews(reviewsPayload);
         } catch (loadError) {
-        setError(loadError instanceof Error ? loadError.message : 'Could not load admin data.');
+            setError(loadError instanceof Error ? loadError.message : 'Could not load admin data.');
         } finally {
-        setLoading(false);
+            setLoading(false);
         }
     }, [session, isAdmin]);
 
@@ -41,145 +48,151 @@ export default function AdminScreen() {
         loadData();
     }, [loadData]);
 
+    const onUpdateRole = async (user: AuthUser) => {
+        const roles: ("user" | "critique" | "admin")[] = ["user", "critique", "admin"];
+        const currentIndex = roles.indexOf(user.role as any);
+        const nextRole = roles[(currentIndex + 1) % roles.length];
+
+        try {
+            await adminUpdateUserRole(session!.token, user.id, nextRole);
+            await loadData();
+        } catch (e) {
+            setError('Failed to update user role.');
+        }
+    };
+
+    const onDeleteUser = async (user: AuthUser) => {
+        Alert.alert("Suppression", `Supprimer l'utilisateur ${user.username} ?`, [
+            { text: "Annuler", style: "cancel" },
+            { 
+                text: "Supprimer", 
+                style: "destructive", 
+                onPress: async () => {
+                    try {
+                        await adminDeleteUser(session!.token, user.id);
+                        await loadData();
+                    } catch (e) {
+                        setError('Failed to delete user.');
+                    }
+                } 
+            }
+        ]);
+    };
+
     const onTogglePin = async (review: Review) => {
-        if (!session || !isAdmin) {
-        return;
-        }
-
+        if (!session || !isAdmin) return;
         try {
-        await adminPinReview(session.token, review.id, review.is_pinned !== 1);
-        await loadData();
+            await adminPinReview(session.token, review.id, review.is_pinned !== 1);
+            await loadData();
         } catch (pinError) {
-        setError(pinError instanceof Error ? pinError.message : 'Pin action failed.');
+            setError('Pin action failed.');
         }
     };
 
-    const onDelete = async (reviewId: number) => {
-        if (!session || !isAdmin) {
-        return;
-        }
-
+    const onDeleteReview = async (reviewId: number) => {
+        if (!session || !isAdmin) return;
         try {
-        await adminDeleteReview(session.token, reviewId);
-        await loadData();
+            await adminDeleteReview(session.token, reviewId);
+            await loadData();
         } catch (deleteError) {
-        setError(deleteError instanceof Error ? deleteError.message : 'Delete action failed.');
+            setError('Delete action failed.');
         }
     };
 
-    if (!session) {
+    if (!session || !isAdmin) {
         return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Admin</Text>
-            <Text style={styles.text}>Login required.</Text>
-            <Link href="/login" style={styles.link}>
-            Go to login
-            </Link>
-        </View>
-        );
-    }
-
-    if (!isAdmin) {
-        return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Admin</Text>
-            <Text style={styles.text}>This page is only accessible to admin users.</Text>
-        </View>
+            <View style={styles.container}>
+                <Text style={styles.title}>Access Denied</Text>
+                <Link href="/login" style={styles.link}>Go to login</Link>
+            </View>
         );
     }
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Admin</Text>
-        <LiquidGlassButton label="Refresh" variant="secondary" size="sm" onPress={loadData} />
+            <Text style={styles.title}>Admin Dashboard</Text>
+            <LiquidGlassButton label="Refresh Data" variant="secondary" size="sm" onPress={loadData} />
 
-        {loading ? <Text style={styles.text}>Loading...</Text> : null}
-        {error ? <Text style={styles.text}>{error}</Text> : null}
+            {loading ? <Text style={styles.text}>Loading...</Text> : null}
+            {error ? <Text style={{ color: 'red' }}>{error}</Text> : null}
 
-        <View style={styles.card}>
-            <Text style={styles.subtitle}>Users</Text>
-            {users.length === 0 ? <Text style={styles.text}>No users found.</Text> : null}
-            {users.map((user) => (
-            <Text key={user.id} style={styles.text}>
-                {user.username} ({user.role})
-            </Text>
-            ))}
-        </View>
+            {/* SECTION UTILISATEURS */}
+            <View style={styles.card}>
+                <Text style={styles.subtitle}>Users Management</Text>
+                {users.map((user) => {
+                    const isMe = session.user?.id === user.id;
+                    const isOfficialCritique = user.email === 'critique@revieweo.com';
+                    const isProtected = isMe || isOfficialCritique;
 
-        <View style={styles.card}>
-            <Text style={styles.subtitle}>Review moderation</Text>
-            {reviews.length === 0 ? <Text style={styles.text}>No reviews found.</Text> : null}
-
-            {reviews.map((review) => (
-            <View key={review.id} style={styles.entry}>
-                <Text style={styles.text}>
-                {review.album_title} - {review.author}
-                </Text>
-                <Text style={styles.text}>Pinned: {review.is_pinned === 1 ? 'yes' : 'no'}</Text>
-
-                <View style={styles.row}>
-                <Link href={{ pathname: '/review/[id]', params: { id: String(review.id) } }} style={styles.link}>
-                    Open review
-                </Link>
-                <LiquidGlassButton
-                    label={review.is_pinned === 1 ? 'Unpin' : 'Pin'}
-                    variant="toggle"
-                    size="sm"
-                    active={review.is_pinned === 1}
-                    onPress={() => onTogglePin(review)}
-                />
-                <LiquidGlassButton
-                    label="Delete"
-                    variant="destructive"
-                    size="sm"
-                    onPress={() => onDelete(review.id)}
-                />
-                </View>
+                    return (
+                        <View key={user.id} style={styles.entry}>
+                            <Text style={[styles.text, { fontWeight: '700' }]}>
+                                {user.username} {isMe ? '(You)' : ''}
+                                <Text style={{ fontWeight: '400', fontSize: 12 }}> ({user.email})</Text>
+                            </Text>
+                            <Text style={styles.text}>Role: {user.role}</Text>
+                            
+                            <View style={styles.row}>
+                                {!isProtected ? (
+                                    <>
+                                        <LiquidGlassButton 
+                                            label="Change Role" 
+                                            size="sm" 
+                                            onPress={() => onUpdateRole(user)} 
+                                        />
+                                        <LiquidGlassButton 
+                                            label="Delete" 
+                                            variant="destructive" 
+                                            size="sm" 
+                                            onPress={() => onDeleteUser(user)} 
+                                        />
+                                    </>
+                                ) : (
+                                    <Text style={{ fontSize: 12, color: '#666', fontStyle: 'italic' }}>
+                                        Account Protected
+                                    </Text>
+                                )}
+                            </View>
+                        </View>
+                    );
+                })}
             </View>
-            ))}
-        </View>
+
+            {/* SECTION REVIEWS */}
+            <View style={styles.card}>
+                <Text style={styles.subtitle}>Review Moderation</Text>
+                {reviews.map((review) => (
+                    <View key={review.id} style={styles.entry}>
+                        <Text style={styles.text}>{review.album_title} - {review.author}</Text>
+                        <View style={styles.row}>
+                            <LiquidGlassButton
+                                label={review.is_pinned === 1 ? 'Unpin' : 'Pin'}
+                                variant="toggle"
+                                size="sm"
+                                active={review.is_pinned === 1}
+                                onPress={() => onTogglePin(review)}
+                            />
+                            <LiquidGlassButton
+                                label="Delete"
+                                variant="destructive"
+                                size="sm"
+                                onPress={() => onDeleteReview(review.id)}
+                            />
+                        </View>
+                    </View>
+                ))}
+            </View>
         </ScrollView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        padding: 16,
-        gap: 10,
-    },
-    title: {
-        color: '#000000',
-        fontSize: 22,
-        fontWeight: '700',
-    },
-    subtitle: {
-        color: '#000000',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    text: {
-        color: '#000000',
-    },
-    card: {
-        borderWidth: 1,
-        borderColor: '#000000',
-        padding: 10,
-        gap: 6,
-    },
-    entry: {
-        gap: 4,
-        borderBottomWidth: 1,
-        borderBottomColor: '#000000',
-        paddingBottom: 8,
-    },
-    row: {
-        flexDirection: 'row',
-        gap: 8,
-        alignItems: 'center',
-        flexWrap: 'wrap',
-    },
-    link: {
-        color: '#000000',
-        textDecorationLine: 'underline',
-    },
+    container: { padding: 16, gap: 15 },
+    title: { color: '#000', fontSize: 22, fontWeight: '700' },
+    subtitle: { color: '#000', fontSize: 18, fontWeight: '600', marginBottom: 5 },
+    text: { color: '#000', fontSize: 14 },
+    card: { borderWidth: 1, borderColor: '#000', padding: 12, gap: 8, backgroundColor: '#fff' },
+    entry: { paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: '#eee', gap: 5 },
+    row: { flexDirection: 'row', gap: 8, marginTop: 5, alignItems: 'center' },
+    link: { color: '#000', textDecorationLine: 'underline', fontSize: 14 }
 });

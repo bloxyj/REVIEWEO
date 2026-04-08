@@ -21,114 +21,107 @@ final class AdminController extends ApiController
         $this->reviewModel = new Review($db);
     }
 
-    /**
-     * @return array{0:int,1:array<string,mixed>}
-     */
     public function listUsers(): array
     {
         return $this->safely(function (): array {
             $user = $this->authenticatedUser();
-
-            if ($user === null) {
-                return $this->error('Unauthorized.', 401);
-            }
-
-            if (($user['role'] ?? 'user') !== 'admin') {
-                return $this->error('Forbidden. Admin only.', 403);
-            }
+            if ($user === null) return $this->error('Unauthorized.', 401);
+            if (($user['role'] ?? 'user') !== 'admin') return $this->error('Forbidden. Admin only.', 403);
 
             return $this->success($this->userModel->getAll());
         });
     }
 
     /**
-     * @return array{0:int,1:array<string,mixed>}
+     * Met à jour le rôle d'un utilisateur
      */
-    public function deleteCritique(int $critiqueId): array
+    public function updateUserRole(int $userId): array
     {
-        return $this->deleteReview($critiqueId);
+        return $this->safely(function () use ($userId): array {
+            $admin = $this->authenticatedUser();
+            if ($admin === null) return $this->error('Unauthorized.', 401);
+            if (($admin['role'] ?? 'user') !== 'admin') return $this->error('Forbidden.', 403);
+
+            // SÉCURITÉ : Empêcher l'admin de changer son propre rôle
+            if ((int)$admin['id'] === $userId) {
+                return $this->error('Forbidden: You cannot change your own role.', 403);
+            }
+
+            $targetUser = $this->userModel->findById($userId);
+            if (!$targetUser) return $this->error('User not found.', 404);
+
+            // SÉCURITÉ : Protection du compte critique officiel
+            if ($targetUser['email'] === 'critique@revieweo.com') {
+                return $this->error('Forbidden: Cannot modify official critique.', 403);
+            }
+
+            $data = $this->readJsonBody();
+            $newRole = $data['role'] ?? null;
+
+            if (!in_array($newRole, ['user', 'critique', 'admin'])) {
+                return $this->error('Invalid role value.', 422);
+            }
+
+            $this->userModel->updateRole($userId, $newRole);
+            return $this->success($this->userModel->findById($userId));
+        });
     }
 
     /**
-     * @return array{0:int,1:array<string,mixed>}
+     * Supprime un utilisateur
      */
+    public function deleteUser(int $userId): array
+    {
+        return $this->safely(function () use ($userId): array {
+            $admin = $this->authenticatedUser();
+            if ($admin === null) return $this->error('Unauthorized.', 401);
+            if (($admin['role'] ?? 'user') !== 'admin') return $this->error('Forbidden.', 403);
+
+            // SÉCURITÉ : Empêcher l'admin de se supprimer lui-même
+            if ((int)$admin['id'] === $userId) {
+                return $this->error('Forbidden: You cannot delete your own account.', 403);
+            }
+
+            $targetUser = $this->userModel->findById($userId);
+            if (!$targetUser) return $this->error('User not found.', 404);
+
+            // SÉCURITÉ : Protection du compte critique officiel
+            if ($targetUser['email'] === 'critique@revieweo.com') {
+                return $this->error('Forbidden: Cannot delete official critique.', 403);
+            }
+
+            $this->userModel->delete($userId);
+            return $this->success(['message' => 'User deleted successfully.']);
+        });
+    }
+
     public function deleteReview(int $reviewId): array
     {
         return $this->safely(function () use ($reviewId): array {
             $user = $this->authenticatedUser();
-
-            if ($user === null) {
-                return $this->error('Unauthorized.', 401);
-            }
-
-            if (($user['role'] ?? 'user') !== 'admin') {
-                return $this->error('Forbidden. Admin only.', 403);
-            }
-
-            $review = $this->reviewModel->findRawById($reviewId);
-
-            if ($review === null) {
-                return $this->error('Review not found.', 404);
-            }
+            if ($user === null) return $this->error('Unauthorized.', 401);
+            if (($user['role'] ?? 'user') !== 'admin') return $this->error('Forbidden.', 403);
 
             $this->reviewModel->delete($reviewId);
-
-            return $this->success([
-                'message' => 'Review deleted by admin.',
-            ]);
+            return $this->success(['message' => 'Review deleted by admin.']);
         });
     }
 
-    /**
-     * @return array{0:int,1:array<string,mixed>}
-     */
-    public function pinCritique(int $critiqueId): array
-    {
-        return $this->pinReview($critiqueId);
-    }
-
-    /**
-     * @return array{0:int,1:array<string,mixed>}
-     */
     public function pinReview(int $reviewId): array
     {
         return $this->safely(function () use ($reviewId): array {
             $user = $this->authenticatedUser();
-
-            if ($user === null) {
-                return $this->error('Unauthorized.', 401);
-            }
-
-            if (($user['role'] ?? 'user') !== 'admin') {
-                return $this->error('Forbidden. Admin only.', 403);
-            }
-
-            $review = $this->reviewModel->findRawById($reviewId);
-
-            if ($review === null) {
-                return $this->error('Review not found.', 404);
-            }
+            if ($user === null) return $this->error('Unauthorized.', 401);
+            if (($user['role'] ?? 'user') !== 'admin') return $this->error('Forbidden.', 403);
 
             $data = $this->readJsonBody();
-
-            if (array_key_exists('is_pinned', $data)) {
-                $isPinned = filter_var($data['is_pinned'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
-                if ($isPinned === null) {
-                    return $this->error('is_pinned must be a boolean.', 422);
-                }
-            } else {
-                $isPinned = ((int) $review['is_pinned']) !== 1;
-            }
-
-            $this->reviewModel->setPinned($reviewId, (bool) $isPinned, (int) $user['id']);
-
-            $updated = $this->reviewModel->getById($reviewId);
-
-            if ($updated === null) {
-                return $this->error('Review not found after pin update.', 404);
-            }
-
-            return $this->success($updated);
+            $isPinned = filter_var($data['is_pinned'] ?? true, FILTER_VALIDATE_BOOLEAN);
+            
+            $this->reviewModel->setPinned($reviewId, $isPinned, (int)$user['id']);
+            return $this->success($this->reviewModel->getById($reviewId));
         });
     }
+
+    public function deleteCritique(int $id): array { return $this->deleteReview($id); }
+    public function pinCritique(int $id): array { return $this->pinReview($id); }
 }
