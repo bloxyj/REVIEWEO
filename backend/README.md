@@ -11,25 +11,42 @@ Important:
 ## Database Setup
 
 - Base schema: `backend/migrations/001_initial.sql`
-- Optional local mock music seed: `backend/migrations/002_seed_music_mock_data.sql`
-- Release-linked reviews and review likes: `backend/migrations/003_release_reviews_and_discovery.sql`
+- Mock music catalog seed: `backend/migrations/002_seed_music_mock_data.sql`
+- Release-linked reviews and likes schema: `backend/migrations/003_release_reviews_and_discovery.sql`
+- Mock release-linked reviews and likes seed: `backend/migrations/004_seed_album_reviews_mock_data.sql`
 
-Run schema first:
+With Docker Compose, MySQL auto-runs all migration files from `backend/migrations/`
+on first initialization of the `mysql_data` volume.
+
+Run order is filename order:
+
+1. `001_initial.sql`
+2. `002_seed_music_mock_data.sql`
+3. `003_release_reviews_and_discovery.sql`
+4. `004_seed_album_reviews_mock_data.sql`
+
+Start stack:
 
 ```bash
-docker exec -i revieweo-mysql mysql -u revieweo -previeweo_password revieweo < backend/migrations/001_initial.sql
+docker compose up --build
 ```
 
-Then run review/discovery migration:
+Important:
+
+- Auto-init scripts run only once for a fresh `mysql_data` volume.
+- Existing DB volumes are not reinitialized automatically.
+
+To reset local DB and rerun all migrations:
 
 ```bash
-docker exec -i revieweo-mysql mysql -u revieweo -previeweo_password revieweo < backend/migrations/003_release_reviews_and_discovery.sql
+docker compose down -v
+docker compose up --build
 ```
 
-Then run the optional seed file only if you want mock catalog data:
+To apply only the latest review seed migration on an existing volume:
 
 ```bash
-docker exec -i revieweo-mysql mysql -u revieweo -previeweo_password revieweo < backend/migrations/002_seed_music_mock_data.sql
+docker exec -i revieweo-mysql mysql -u revieweo -previeweo_password revieweo < backend/migrations/004_seed_album_reviews_mock_data.sql
 ```
 
 ## Health

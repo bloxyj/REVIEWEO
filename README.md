@@ -39,30 +39,40 @@ Default URLs:
 - Frontend (Expo web): <http://localhost:19006>
 - API base URL from client perspective: <http://localhost/api>
 
-## Run DB migration
+## Database initialization
 
-Schema migration file:
+On a fresh database volume, MySQL now auto-runs migration files from
+`backend/migrations/` using `/docker-entrypoint-initdb.d`.
 
-- backend/migrations/001_initial.sql
+Execution order is filename order:
 
-Optional local mock data seed file:
+- `001_initial.sql`
+- `002_seed_music_mock_data.sql`
+- `003_release_reviews_and_discovery.sql`
+- `004_seed_album_reviews_mock_data.sql`
 
-- backend/migrations/002_seed_music_mock_data.sql
-
-Apply schema first:
+Start the stack as usual:
 
 ```bash
-docker exec -i revieweo-mysql mysql -u revieweo -previeweo_password revieweo < backend/migrations/001_initial.sql
+docker compose up --build
 ```
 
-Then load mock data only if you want seeded music content:
+Important:
+
+- Init scripts run only once when `mysql_data` is first created.
+- If you already have an existing DB volume, scripts do not rerun automatically.
+
+To fully reinitialize local DB state:
 
 ```bash
-docker exec -i revieweo-mysql mysql -u revieweo -previeweo_password revieweo < backend/migrations/002_seed_music_mock_data.sql
+docker compose down -v
+docker compose up --build
 ```
 
+To apply a new migration manually on an existing volume:
+
 ```bash
-docker exec -i revieweo-mysql mysql -u revieweo -previeweo_password revieweo < backend/migrations/003_release_reviews_and_discovery.sql
+docker exec -i revieweo-mysql mysql -u revieweo -previeweo_password revieweo < backend/migrations/004_seed_album_reviews_mock_data.sql
 ```
 
 ## Auth usage
