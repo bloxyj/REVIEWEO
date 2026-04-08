@@ -11,48 +11,20 @@ export default function HomeScreen() {
     return (
         <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>REVIEWEO</Text>
+        {session && <Text style={styles.username}>{session?.user.username}</Text>}
+        {!session && (
+            <Link href="/login" style={styles.sessionLink}>
+                Login
+            </Link>
+        )}
 
         <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Session</Text>
-            {session ? (
-            <>
-                <Text style={styles.text}>Logged in as {session.user.username}</Text>
-                <Text style={styles.text}>Role: {session.user.role}</Text>
-                <LiquidGlassButton label="Logout" variant="nav" size="sm" onPress={clearSession} />
-            </>
-            ) : (
-            <>
-                <Text style={styles.text}>Not logged in.</Text>
-                <Link href="/login" style={styles.link}>
-                Go to Login
-                </Link>
-                <Link href="/register" style={styles.link}>
-                Go to Register
-                </Link>
-            </>
-            )}
+            <Text style={styles.sectionTitle}>Featured Reviews</Text>
+
         </View>
 
         <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Browse</Text>
-            <Link href="/artists" style={styles.link}>
-            Artists
-            </Link>
-            <Link href="/albums" style={styles.link}>
-            Albums
-            </Link>
-            <Link href="/reviews" style={styles.link}>
-            Reviews
-            </Link>
-            <Link href="/search" style={styles.link}>
-            Search
-            </Link>
-            <Link href="/charts" style={styles.link}>
-            Charts
-            </Link>
-            <Link href="/admin" style={styles.link}>
-            Admin
-            </Link>
+
         </View>
         </ScrollView>
     );
@@ -69,6 +41,20 @@ const styles = StyleSheet.create({
         color: '#000000',
         paddingBottom: 10,
     },
+    username: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#000000',
+        display : 'flex',
+    },
+
+    sessionLink: {
+        color: '#000000',
+        textDecorationLine: 'underline',
+        fontSize: 13,
+        display : 'flex',
+    },
+
     text: {
         color: '#000000',
         fontSize: 14,
