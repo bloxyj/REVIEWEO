@@ -1,24 +1,61 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { AuthProvider } from '@/context/auth-context';
+import { DesktopTopNav } from '@/components/navigation/DesktopTopNav';
+import { Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
-
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  const pathname = usePathname();
+  const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+
+  const isDesktop = Platform.OS === 'web' && width >= 1024;
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <AuthProvider>
+      <View style={styles.shell}>
+        {isDesktop ? <DesktopTopNav pathname={pathname} /> : null}
+
+        <View style={styles.stackArea}>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: [
+                styles.stackContent,
+                !isDesktop
+                  ? [
+                      {
+                        paddingTop: Math.max(insets.top, 16),
+                        paddingBottom: Platform.OS === 'ios' ? Math.max(insets.bottom, 16) : 0,
+                      },
+                    ]
+                  : null,
+              ],
+            }}>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="login" />
+            <Stack.Screen name="register" />
+            <Stack.Screen name="charts" />
+            <Stack.Screen name="admin" />
+          </Stack>
+        </View>
+      </View>
+
+      <StatusBar style="dark" />
+    </AuthProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  shell: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
+  stackArea: {
+    flex: 1,
+  },
+  stackContent: {
+    backgroundColor: '#ffffff',
+  },
+});

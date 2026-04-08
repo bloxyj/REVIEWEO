@@ -1,6 +1,6 @@
 services:
   nginx:
-    image: nginx:1.27-alpine
+    image: nginx:1.28-alpine
     container_name: revieweo-nginx
     depends_on:
       - frontend
@@ -48,6 +48,10 @@ services:
       MYSQL_DATABASE: ${MYSQL_DB:-revieweo}
       MYSQL_USER: ${MYSQL_USER:-revieweo}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-revieweo_password}
+      JWT_SECRET: ${JWT_SECRET:-revieweo-dev-secret-change-me}
+      JWT_ISSUER: ${JWT_ISSUER:-revieweo-api}
+      JWT_TTL: ${JWT_TTL:-3600}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-*}
     volumes:
       - ./backend:/var/www/html
     expose:
@@ -57,7 +61,7 @@ services:
       - revieweo
 
   mysql:
-    image: mysql:8.0
+    image: mysql:8.4
     container_name: revieweo-mysql
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}

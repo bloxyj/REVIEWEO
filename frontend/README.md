@@ -1,50 +1,60 @@
-# Welcome to your Expo app 👋
+# REVIEWEO Frontend
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Minimal Expo frontend for REVIEWEO, designed for both web and mobile.
 
-## Get started
+The UI is intentionally simple: black text on white background with layout-only styling.
+
+## Setup
 
 1. Install dependencies
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+1. Configure API base URL
 
-## Learn more
+```bash
+cp .env.example .env
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+Set `EXPO_PUBLIC_API_BASE_URL` in `.env`:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- Web local: `http://localhost/api`
+- Physical phone: `http://<YOUR_LAN_IP>/api`
 
-## Join the community
+1. Start the app
 
-Join our community of developers creating universal apps.
+```bash
+npm run start
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Use `npm run web`, `npm run ios`, or `npm run android` for a specific target.
+
+## Routes
+
+- `/` Home
+- `/login` Login
+- `/register` Register
+- `/artists` Artists list
+- `/artist/[id]` Artist detail
+- `/albums` Albums list
+- `/album/[id]` Album detail + reviews
+- `/reviews` Reviews list
+- `/review/[id]` Review detail
+- `/search` Search (artists/albums)
+- `/charts` Top-rated charts (year/genre/release_type filters)
+- `/admin` Admin users + review moderation
+
+## API Coverage
+
+Frontend is connected to backend endpoints for:
+
+- Authentication (`/auth/*`)
+- Artists (`/artists/*`)
+- Albums (`/albums/*`)
+- Release-linked reviews (`/reviews`, `/albums/{id}/reviews`)
+- Likes (`/likes/{id_review}`)
+- Admin moderation (`/admin/users`, `/admin/reviews/{id}`, `/admin/pin/{id}`)
+- Search (`/search`)
+- Charts (`/charts`)
