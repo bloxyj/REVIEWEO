@@ -4,6 +4,7 @@ export type NavLink = {
     label: string;
     href: Href;
     matchPatterns: string[];
+    adminOnly?: boolean;
 };
 
 export const desktopNavLinks: NavLink[] = [
@@ -13,19 +14,23 @@ export const desktopNavLinks: NavLink[] = [
     { label: 'Reviews', href: '/reviews', matchPatterns: ['/reviews', '/review'] },
     { label: 'Search', href: '/search', matchPatterns: ['/search'] },
     { label: 'Charts', href: '/charts', matchPatterns: ['/charts'] },
-    { label: 'Admin', href: '/admin', matchPatterns: ['/admin'] },
+    { label: 'Admin', href: '/admin', matchPatterns: ['/admin'], adminOnly: true },
 ];
+
+export function getFilteredNavLinks(isAdmin: boolean): NavLink[] {
+    return desktopNavLinks.filter(link => {
+        if (link.adminOnly && !isAdmin) {
+            return false;
+        }
+        return true;
+    });
+}
 
 export function isActivePath(pathname: string, patterns: string[]): boolean {
     const cleanPath = pathname.replace(/\/$/, '') || '/';
-
     return patterns.some((pattern) => {
         const cleanPattern = pattern.replace(/\/$/, '') || '/';
-
-        if (cleanPattern === '/') {
-        return cleanPath === '/';
-        }
-
+        if (cleanPattern === '/') return cleanPath === '/';
         return cleanPath === cleanPattern || cleanPath.startsWith(`${cleanPattern}/`);
     });
 }
