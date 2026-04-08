@@ -62,9 +62,6 @@ final class User
         return $statement->fetchAll();
     }
 
-    /**
-     * Met à jour le rôle d'un utilisateur
-     */
     public function updateRole(int $id, string $role): bool
     {
         $query = 'UPDATE users SET role = :role WHERE id = :id';
@@ -72,9 +69,6 @@ final class User
         return $statement->execute(['role' => $role, 'id' => $id]);
     }
 
-    /**
-     * Supprime un utilisateur définitivement
-     */
     public function delete(int $id): bool
     {
         $query = 'DELETE FROM users WHERE id = :id';

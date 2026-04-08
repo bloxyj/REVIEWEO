@@ -32,9 +32,6 @@ final class AdminController extends ApiController
         });
     }
 
-    /**
-     * Met à jour le rôle d'un utilisateur
-     */
     public function updateUserRole(int $userId): array
     {
         return $this->safely(function () use ($userId): array {
@@ -42,7 +39,6 @@ final class AdminController extends ApiController
             if ($admin === null) return $this->error('Unauthorized.', 401);
             if (($admin['role'] ?? 'user') !== 'admin') return $this->error('Forbidden.', 403);
 
-            // SÉCURITÉ : Empêcher l'admin de changer son propre rôle
             if ((int)$admin['id'] === $userId) {
                 return $this->error('Forbidden: You cannot change your own role.', 403);
             }
@@ -50,7 +46,6 @@ final class AdminController extends ApiController
             $targetUser = $this->userModel->findById($userId);
             if (!$targetUser) return $this->error('User not found.', 404);
 
-            // SÉCURITÉ : Protection du compte critique officiel
             if ($targetUser['email'] === 'critique@revieweo.com') {
                 return $this->error('Forbidden: Cannot modify official critique.', 403);
             }
@@ -67,9 +62,6 @@ final class AdminController extends ApiController
         });
     }
 
-    /**
-     * Supprime un utilisateur
-     */
     public function deleteUser(int $userId): array
     {
         return $this->safely(function () use ($userId): array {
@@ -77,7 +69,6 @@ final class AdminController extends ApiController
             if ($admin === null) return $this->error('Unauthorized.', 401);
             if (($admin['role'] ?? 'user') !== 'admin') return $this->error('Forbidden.', 403);
 
-            // SÉCURITÉ : Empêcher l'admin de se supprimer lui-même
             if ((int)$admin['id'] === $userId) {
                 return $this->error('Forbidden: You cannot delete your own account.', 403);
             }
@@ -85,7 +76,6 @@ final class AdminController extends ApiController
             $targetUser = $this->userModel->findById($userId);
             if (!$targetUser) return $this->error('User not found.', 404);
 
-            // SÉCURITÉ : Protection du compte critique officiel
             if ($targetUser['email'] === 'critique@revieweo.com') {
                 return $this->error('Forbidden: Cannot delete official critique.', 403);
             }
