@@ -63,19 +63,36 @@ export default function AdminScreen() {
     };
 
     const onDeleteUser = async (user: AuthUser) => {
+        if (Platform.OS === 'web') {
+            const confirmed = window.confirm(`Supprimer l'utilisateur ${user.username} ?`);
+            if (!confirmed) return;
+            try {
+                console.log('Deleting user:', user.id);
+                const result = await adminDeleteUser(session!.token, user.id);
+                console.log('Delete result:', result);
+                await loadData();
+            } catch (err) {
+                console.error('Delete error:', err);
+                setError(err instanceof Error ? err.message : 'Failed to delete user.');
+            }
+            return;
+        }
+
         Alert.alert("Suppression", `Supprimer l'utilisateur ${user.username} ?`, [
             { text: "Annuler", style: "cancel" },
-            { 
-                text: "Supprimer", 
-                style: "destructive", 
+            {
+                text: "Supprimer",
+                style: "destructive",
                 onPress: async () => {
                     try {
-                        await adminDeleteUser(session!.token, user.id);
+                        const result = await adminDeleteUser(session!.token, user.id);
+                        console.log('Delete result:', result);
                         await loadData();
-                    } catch {
-                        setError('Failed to delete user.');
+                    } catch (err) {
+                        console.error('Delete error:', err);
+                        setError(err instanceof Error ? err.message : 'Failed to delete user.');
                     }
-                } 
+                }
             }
         ]);
     };

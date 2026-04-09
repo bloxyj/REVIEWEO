@@ -75,4 +75,4 @@ final class User
         $statement = $this->db->prepare($query);
         return $statement->execute(['id' => $id]);
     }
-}
+}   
