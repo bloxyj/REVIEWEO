@@ -74,6 +74,8 @@ export type Album = {
     release_year: number;
     release_type: string;
     collaborators: string | null;
+    cover_image: string | null;
+    cover_image_url: string | null;
     average_rating: number | null;
     ratings_count: number;
     reviews_count: number;
@@ -109,6 +111,8 @@ export type Review = {
     release_type: string;
     artist_id: number;
     artist_name: string;
+    cover_image: string | null;
+    cover_image_url: string | null;
     user_id: number;
     author: string;
     title: string;
@@ -127,13 +131,28 @@ export type ReviewInput = {
     content?: string;
 };
 
-export type SearchType = 'all' | 'artists' | 'albums';
+export type SearchTrack = {
+    id: number;
+    title: string;
+    track_order: number;
+    popularity_score: number | null;
+    listeners_k: number | null;
+    has_lyrics: 0 | 1;
+    album_id: number;
+    album_title: string;
+    release_year: number;
+    artist_id: number;
+    artist_name: string;
+};
+
+export type SearchType = 'all' | 'artists' | 'albums' | 'tracks';
 
 export type SearchResponse = {
     query: string;
     type: SearchType;
     artists: Artist[];
     albums: Album[];
+    tracks: SearchTrack[];
 };
 
 export type ChartItem = {

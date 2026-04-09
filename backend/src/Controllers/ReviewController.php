@@ -47,7 +47,9 @@ final class ReviewController extends ApiController
 				return $this->error('limit must be an integer between 1 and 500.', 422);
 			}
 
-			return $this->success($this->reviewModel->getAll($albumId, $userId, (int) $limit));
+			$reviews = $this->reviewModel->getAll($albumId, $userId, (int) $limit);
+
+			return $this->success($this->withAlbumCoverUrls($reviews, 'album_id'));
 		});
 	}
 
@@ -66,7 +68,9 @@ final class ReviewController extends ApiController
 				return $this->error('limit must be an integer between 1 and 500.', 422);
 			}
 
-			return $this->success($this->reviewModel->getAll($albumId, null, (int) $limit));
+			$reviews = $this->reviewModel->getAll($albumId, null, (int) $limit);
+
+			return $this->success($this->withAlbumCoverUrls($reviews, 'album_id'));
 		});
 	}
 
@@ -82,7 +86,7 @@ final class ReviewController extends ApiController
 				return $this->error('Review not found.', 404);
 			}
 
-			return $this->success($review);
+			return $this->success($this->withAlbumCoverUrl($review, 'album_id'));
 		});
 	}
 
@@ -137,7 +141,7 @@ final class ReviewController extends ApiController
 				return $this->error('Review could not be created.', 500);
 			}
 
-			return $this->success($review, 201);
+			return $this->success($this->withAlbumCoverUrl($review, 'album_id'), 201);
 		});
 	}
 
@@ -190,7 +194,7 @@ final class ReviewController extends ApiController
 				return $this->error('Review could not be created.', 500);
 			}
 
-			return $this->success($review, 201);
+			return $this->success($this->withAlbumCoverUrl($review, 'album_id'), 201);
 		});
 	}
 
@@ -249,7 +253,7 @@ final class ReviewController extends ApiController
 				return $this->error('Review not found after update.', 404);
 			}
 
-			return $this->success($updated);
+			return $this->success($this->withAlbumCoverUrl($updated, 'album_id'));
 		});
 	}
 

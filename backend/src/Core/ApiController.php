@@ -150,6 +150,51 @@ abstract class ApiController
     }
 
     /**
+     * @param array<string, mixed> $row
+     * @return array<string, mixed>
+     */
+    protected function withAlbumCoverUrl(array $row, string $albumIdKey = 'id'): array
+    {
+        $coverImage = isset($row['cover_image']) ? trim((string) $row['cover_image']) : '';
+        $albumId = (int) ($row[$albumIdKey] ?? 0);
+
+        $row['cover_image_url'] = null;
+        if ($coverImage !== '' && $albumId > 0) {
+            $row['cover_image_url'] = $this->publicBaseUrl() . '/api/images/albums/' . $albumId;
+        }
+
+        return $row;
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $rows
+     * @return array<int, array<string, mixed>>
+     */
+    protected function withAlbumCoverUrls(array $rows, string $albumIdKey = 'id'): array
+    {
+        return array_map(
+            fn (array $row): array => $this->withAlbumCoverUrl($row, $albumIdKey),
+            $rows
+        );
+    }
+
+    protected function publicBaseUrl(): string
+    {
+        $scheme = (string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '');
+        if ($scheme === '') {
+            $https = (string) ($_SERVER['HTTPS'] ?? '');
+            $scheme = ($https !== '' && strtolower($https) !== 'off') ? 'https' : 'http';
+        }
+
+        $host = (string) ($_SERVER['HTTP_X_FORWARDED_HOST'] ?? ($_SERVER['HTTP_HOST'] ?? 'localhost'));
+        if ($host === '') {
+            $host = 'localhost';
+        }
+
+        return $scheme . '://' . $host;
+    }
+
+    /**
      * @template T
      * @param callable():T $callback
      * @return array{0:int,1:array<string,mixed>|list<mixed>|T}

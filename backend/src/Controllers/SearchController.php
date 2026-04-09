@@ -30,8 +30,8 @@ final class SearchController extends ApiController
 			}
 
 			$type = strtolower(trim((string) ($_GET['type'] ?? 'all')));
-			if (!in_array($type, ['all', 'artists', 'albums'], true)) {
-				return $this->error('type must be one of: all, artists, albums.', 422);
+			if (!in_array($type, ['all', 'artists', 'albums', 'tracks'], true)) {
+				return $this->error('type must be one of: all, artists, albums, tracks.', 422);
 			}
 
 			$limit = filter_var($_GET['limit'] ?? 20, FILTER_VALIDATE_INT);
@@ -41,6 +41,7 @@ final class SearchController extends ApiController
 
 			$artists = [];
 			$albums = [];
+			$tracks = [];
 
 			if ($type === 'all' || $type === 'artists') {
 				$artists = $this->searchModel->searchArtists($query, (int) $limit);
@@ -48,6 +49,11 @@ final class SearchController extends ApiController
 
 			if ($type === 'all' || $type === 'albums') {
 				$albums = $this->searchModel->searchAlbums($query, (int) $limit);
+				$albums = $this->withAlbumCoverUrls($albums);
+			}
+
+			if ($type === 'all' || $type === 'tracks') {
+				$tracks = $this->searchModel->searchTracks($query, (int) $limit);
 			}
 
 			return $this->success([
@@ -55,6 +61,7 @@ final class SearchController extends ApiController
 				'type' => $type,
 				'artists' => $artists,
 				'albums' => $albums,
+				'tracks' => $tracks,
 			]);
 		});
 	}

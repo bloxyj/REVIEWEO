@@ -1,4 +1,4 @@
-import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
+import { AppButton } from '@/components/ui/AppButton';
 import { type Href, useNavigation, useRouter } from 'expo-router';
 
 type BackNavButtonProps = {
@@ -19,5 +19,5 @@ export function BackNavButton({ fallbackHref = '/', label = 'Back' }: BackNavBut
         router.replace(fallbackHref);
     };
 
-    return <LiquidGlassButton label={label} variant="secondary" size="sm" onPress={onPress} />;
+    return <AppButton label={label} variant="secondary" size="sm" onPress={onPress} />;
 }
