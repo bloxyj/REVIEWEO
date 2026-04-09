@@ -115,29 +115,6 @@ export default function AdminScreen() {
     ]);
     };
 
-    const onTogglePin = async (review: Review) => {
-        if (!session || !isAdmin) return;
-        try {
-            await adminPinReview(session.token, review.id, review.is_pinned !== 1);
-            await loadData();
-        } catch {
-            setError('Pin action failed.');
-        }
-    };
-
-    const onDeleteReview = async (reviewId: number) => {
-        if (!session || !isAdmin) return;
-        try {
-            await adminDeleteReview(session.token, reviewId);
-            await loadData();
-          } catch (deleteError) {
-            setError(deleteError instanceof Error ? deleteError.message : 'Failed to delete user.');
-          }
-        },
-      },
-    ]);
-  };
-
   const onTogglePin = async (review: Review) => {
     if (!session || !isAdmin) {
       return;

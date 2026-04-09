@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
     borderRadius: DesignTokens.radius.sm,
     backgroundColor: DesignTokens.colors.surfaceMuted,
     paddingHorizontal: DesignTokens.spacing.sm,
-    paddingVertical: 8,
+    paddingVertical: 13,
   },
   authCardLabel: {
     color: DesignTokens.colors.textPrimary,
