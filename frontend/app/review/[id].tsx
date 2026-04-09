@@ -4,7 +4,7 @@ import { ScalePressable } from '@/components/ui/ScalePressable';
 import { DesignTokens } from '@/constants/design-system';
 import { useAuth } from '@/context/auth-context';
 import { deleteReview, getReview, toggleReviewLike, updateReview } from '@/lib/api';
-import { getAlbumCoverPlaceholder, getUserAvatarPlaceholder } from '@/lib/placeholders';
+import { getAlbumCoverUri, getUserAvatarPlaceholder } from '@/lib/placeholders';
 import { useResponsiveLayout } from '@/lib/responsive';
 import type { Review } from '@/lib/types';
 import { useReducedMotionPreference } from '@/lib/use-reduced-motion';
@@ -12,7 +12,6 @@ import { Image } from 'expo-image';
 import { Link, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 
 function parseId(input: string | string[] | undefined): number | null {
   if (!input) {
@@ -27,13 +26,6 @@ function parseId(input: string | string[] | undefined): number | null {
   }
 
   return parsed;
-}
-
-function getEntering(shouldReduceMotion: boolean, delay: number) {
-  if (shouldReduceMotion) {
-    return undefined;
-  }
-  return FadeInDown.duration(DesignTokens.motion.durationSlow).delay(delay);
 }
 
 export default function ReviewDetailScreen() {
@@ -161,32 +153,40 @@ export default function ReviewDetailScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
-        <Animated.View entering={getEntering(shouldReduceMotion, 0)} style={styles.topBar}>
+        <View>
           <BackNavButton fallbackHref="/reviews" label="Back to reviews" />
           {Platform.OS === 'web' ? (
             <LiquidGlassButton label="Refresh" variant="secondary" size="sm" onPress={loadReview} />
           ) : null}
-        </Animated.View>
+        </View>
 
         {error ? (
-          <Animated.View entering={getEntering(shouldReduceMotion, 40)} style={styles.errorBanner}>
+          <View>
             <Text style={styles.errorText}>{error}</Text>
-          </Animated.View>
+          </View>
         ) : null}
 
         {loading ? (
-          <Animated.View entering={getEntering(shouldReduceMotion, 80)} style={styles.loadingState}>
+          <View>
             <Text style={styles.loadingTitle}>Loading review detail</Text>
             <Text style={styles.loadingText}>Fetching full review text and interaction state.</Text>
-          </Animated.View>
+          </View>
         ) : null}
 
         {!loading && review ? (
           <>
-            <Animated.View entering={getEntering(shouldReduceMotion, 120)} style={styles.section}>
+            <View>
               <View style={[styles.heroCard, isDesktop ? styles.heroDesktop : styles.heroMobile]}>
                 <Image
-                  source={{ uri: getAlbumCoverPlaceholder(review.album_id, review.album_title, review.artist_name) }}
+                  source={{
+                    uri: getAlbumCoverUri({
+                      albumId: review.album_id,
+                      title: review.album_title,
+                      artist: review.artist_name,
+                      coverImageUrl: review.cover_image_url,
+                      coverImage: review.cover_image,
+                    }),
+                  }}
                   style={[styles.heroCover, isDesktop ? styles.heroCoverDesktop : null]}
                   contentFit="cover"
                   transition={shouldReduceMotion ? 0 : 200}
@@ -240,10 +240,10 @@ export default function ReviewDetailScreen() {
                   </View>
                 </View>
               </View>
-            </Animated.View>
+            </View>
 
             {canEdit ? (
-              <Animated.View entering={getEntering(shouldReduceMotion, 180)} style={styles.section}>
+              <View>
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionTitle}>Edit review</Text>
                   <Text style={styles.sectionMeta}>Update your rating or notes</Text>
@@ -310,7 +310,7 @@ export default function ReviewDetailScreen() {
                     />
                   </View>
                 </View>
-              </Animated.View>
+              </View>
             ) : null}
           </>
         ) : null}

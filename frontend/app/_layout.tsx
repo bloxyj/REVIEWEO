@@ -63,6 +63,10 @@ export default function RootLayout() {
               <Stack.Screen name="(tabs)" options={{ contentStyle: tabContentStyle }} />
               <Stack.Screen name="login" options={{ contentStyle: nonTabContentStyle }} />
               <Stack.Screen name="register" options={{ contentStyle: nonTabContentStyle }} />
+              <Stack.Screen name="album/[id]" options={{ contentStyle: nonTabContentStyle }} />
+              <Stack.Screen name="artist/[id]" options={{ contentStyle: nonTabContentStyle }} />
+              <Stack.Screen name="review/[id]" options={{ contentStyle: nonTabContentStyle }} />
+              <Stack.Screen name="review/create" options={{ contentStyle: nonTabContentStyle }} />
               <Stack.Screen name="charts" options={{ contentStyle: nonTabContentStyle }} />
               <Stack.Screen name="admin" options={{ contentStyle: nonTabContentStyle }} />
             </Stack>

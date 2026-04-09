@@ -3,28 +3,13 @@ import { ScalePressable } from '@/components/ui/ScalePressable';
 import { DesignTokens } from '@/constants/design-system';
 import { listArtists } from '@/lib/api';
 import { getArtistPortraitPlaceholder } from '@/lib/placeholders';
-import { useResponsiveLayout } from '@/lib/responsive';
+import { getFluidGridItemStyle, useResponsiveLayout } from '@/lib/responsive';
 import type { Artist } from '@/lib/types';
 import { useReducedMotionPreference } from '@/lib/use-reduced-motion';
 import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Platform, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-
-function getEntering(shouldReduceMotion: boolean, delay: number) {
-  if (shouldReduceMotion) {
-    return undefined;
-  }
-  return FadeInDown.duration(DesignTokens.motion.durationSlow).delay(delay);
-}
-
-function getListEntering(shouldReduceMotion: boolean, baseDelay: number, index: number) {
-  if (index >= 8) {
-    return undefined;
-  }
-  return getEntering(shouldReduceMotion, baseDelay + index * DesignTokens.motion.stagger);
-}
 
 export default function ArtistsScreen() {
   const { isDesktop, isTablet, contentMaxWidth, horizontalPadding } = useResponsiveLayout();
@@ -64,6 +49,15 @@ export default function ArtistsScreen() {
     : isTablet
       ? { width: 236, height: 342, mediaHeight: 194, bodyHeight: 148 }
       : { width: 220, height: 328, mediaHeight: 184, bodyHeight: 144 };
+  const fluidCardItemStyle = getFluidGridItemStyle({
+    isDesktop,
+    isTablet,
+    minWidth: 220,
+    maxWidth: 320,
+    nativeMobileWidth: '100%',
+    nativeTabletWidth: cardDimensions.width,
+    nativeDesktopWidth: cardDimensions.width,
+  });
 
   const mobileRefreshControl =
     Platform.OS === 'web' ? undefined : <RefreshControl refreshing={loading} onRefresh={loadArtists} />;
@@ -75,7 +69,7 @@ export default function ArtistsScreen() {
       refreshControl={mobileRefreshControl}
     >
       <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
-        <Animated.View entering={getEntering(shouldReduceMotion, 0)} style={styles.masthead}>
+        <View>
           <View style={styles.headerRow}>
             <View style={styles.headerCopy}>
               <Text style={styles.eyebrow}>Catalog</Text>
@@ -97,38 +91,38 @@ export default function ArtistsScreen() {
               <Text style={styles.metricLabel}>combined followers</Text>
             </View>
           </View>
-        </Animated.View>
+        </View>
 
         {error ? (
-          <Animated.View entering={getEntering(shouldReduceMotion, 70)} style={styles.errorBanner}>
+          <View>
             <Text style={styles.errorText}>{error}</Text>
-          </Animated.View>
+          </View>
         ) : null}
 
         {loading ? (
-          <Animated.View entering={getEntering(shouldReduceMotion, 120)} style={styles.loadingState}>
+          <View>
             <Text style={styles.loadingTitle}>Loading artists</Text>
             <Text style={styles.loadingText}>Fetching profile details and follower totals.</Text>
-          </Animated.View>
+          </View>
         ) : null}
 
         {!loading && !error && rankedArtists.length === 0 ? (
-          <Animated.View entering={getEntering(shouldReduceMotion, 170)} style={styles.emptyState}>
+          <View>
             <Text style={styles.emptyTitle}>No artists found</Text>
             <Text style={styles.emptyText}>Artist cards will appear as soon as catalog data is available.</Text>
-          </Animated.View>
+          </View>
         ) : null}
 
         {!loading && !error && rankedArtists.length > 0 ? (
           <View style={styles.artistGrid}>
             {rankedArtists.map((artist, index) => (
-              <Animated.View
+              <View
                 key={artist.id}
-                entering={getListEntering(shouldReduceMotion, 200, index)}
+                style={fluidCardItemStyle}
               >
                 <Link href={{ pathname: '/artist/[id]', params: { id: String(artist.id) } }} asChild>
                   <ScalePressable
-                    contentStyle={[styles.artistCard, { width: cardDimensions.width, height: cardDimensions.height }]}
+                    contentStyle={[styles.artistCard, { height: cardDimensions.height }]}
                   >
                     <Image
                       source={{ uri: getArtistPortraitPlaceholder(artist.id, artist.name) }}
@@ -149,7 +143,7 @@ export default function ArtistsScreen() {
                     </View>
                   </ScalePressable>
                 </Link>
-              </Animated.View>
+              </View>
             ))}
           </View>
         ) : null}

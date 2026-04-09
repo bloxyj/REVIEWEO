@@ -3,33 +3,18 @@ import { ScalePressable } from '@/components/ui/ScalePressable';
 import { DesignTokens } from '@/constants/design-system';
 import { useAuth } from '@/context/auth-context';
 import { listReviews, toggleReviewLike } from '@/lib/api';
-import { getAlbumCoverPlaceholder } from '@/lib/placeholders';
-import { useResponsiveLayout } from '@/lib/responsive';
+import { getAlbumCoverUri } from '@/lib/placeholders';
+import { getFluidGridItemStyle, useResponsiveLayout } from '@/lib/responsive';
 import type { Review } from '@/lib/types';
 import { useReducedMotionPreference } from '@/lib/use-reduced-motion';
 import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-
-function getEntering(shouldReduceMotion: boolean, delay: number) {
-  if (shouldReduceMotion) {
-    return undefined;
-  }
-  return FadeInDown.duration(DesignTokens.motion.durationSlow).delay(delay);
-}
-
-function getListEntering(shouldReduceMotion: boolean, baseDelay: number, index: number) {
-  if (index >= 8) {
-    return undefined;
-  }
-  return getEntering(shouldReduceMotion, baseDelay + index * DesignTokens.motion.stagger);
-}
 
 export default function ReviewsScreen() {
   const { session } = useAuth();
-  const { isDesktop, contentMaxWidth, horizontalPadding } = useResponsiveLayout();
+  const { isDesktop, isTablet, contentMaxWidth, horizontalPadding } = useResponsiveLayout();
   const shouldReduceMotion = useReducedMotionPreference();
 
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -73,7 +58,15 @@ export default function ReviewsScreen() {
     loadReviews();
   }, []);
 
-  const cardWidth = isDesktop ? '48.5%' : '100%';
+  const fluidCardItemStyle = getFluidGridItemStyle({
+    isDesktop,
+    isTablet,
+    minWidth: 220,
+    maxWidth: 320,
+    nativeDesktopWidth: '48.5%',
+    nativeTabletWidth: '48.5%',
+    nativeMobileWidth: '100%',
+  });
 
   const mobileRefreshControl =
     Platform.OS === 'web' ? undefined : <RefreshControl refreshing={loading} onRefresh={loadReviews} />;
@@ -85,7 +78,7 @@ export default function ReviewsScreen() {
       refreshControl={mobileRefreshControl}
     >
       <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
-        <Animated.View entering={getEntering(shouldReduceMotion, 0)} style={styles.masthead}>
+        <View>
           <View style={styles.headerRow}>
             <View style={styles.headerCopy}>
               <Text style={styles.eyebrow}>Community</Text>
@@ -107,38 +100,46 @@ export default function ReviewsScreen() {
               </Link>
             </View>
           ) : null}
-        </Animated.View>
+        </View>
 
         {error ? (
-          <Animated.View entering={getEntering(shouldReduceMotion, 70)} style={styles.errorBanner}>
+          <View>
             <Text style={styles.errorText}>{error}</Text>
-          </Animated.View>
+          </View>
         ) : null}
 
         {loading ? (
-          <Animated.View entering={getEntering(shouldReduceMotion, 110)} style={styles.loadingState}>
+          <View>
             <Text style={styles.loadingTitle}>Loading reviews</Text>
             <Text style={styles.loadingText}>Pulling latest ratings and written notes.</Text>
-          </Animated.View>
+          </View>
         ) : null}
 
         {!loading && !error && reviews.length === 0 ? (
-          <Animated.View entering={getEntering(shouldReduceMotion, 170)} style={styles.emptyState}>
+          <View>
             <Text style={styles.emptyTitle}>No reviews found</Text>
             <Text style={styles.emptyText}>Reviews will appear here once listeners start writing.</Text>
-          </Animated.View>
+          </View>
         ) : null}
 
         {!loading && !error && reviews.length > 0 ? (
           <View style={styles.reviewGrid}>
             {reviews.map((review, index) => (
-              <Animated.View
+              <View
                 key={review.id}
-                entering={getListEntering(shouldReduceMotion, 210, index)}
+                style={fluidCardItemStyle}
               >
-                <View style={[styles.reviewCard, { width: cardWidth }]}>
+                <View style={styles.reviewCard}>
                   <Image
-                    source={{ uri: getAlbumCoverPlaceholder(review.album_id, review.album_title, review.artist_name) }}
+                    source={{
+                      uri: getAlbumCoverUri({
+                        albumId: review.album_id,
+                        title: review.album_title,
+                        artist: review.artist_name,
+                        coverImageUrl: review.cover_image_url,
+                        coverImage: review.cover_image,
+                      }),
+                    }}
                     style={styles.reviewImage}
                     contentFit="cover"
                     transition={shouldReduceMotion ? 0 : 170}
@@ -186,7 +187,7 @@ export default function ReviewsScreen() {
                     </View>
                   </View>
                 </View>
-              </Animated.View>
+              </View>
             ))}
           </View>
         ) : null}

@@ -4,23 +4,15 @@ import { ScalePressable } from '@/components/ui/ScalePressable';
 import { DesignTokens } from '@/constants/design-system';
 import { useAuth } from '@/context/auth-context';
 import { listAlbums, listArtists, listReviews } from '@/lib/api';
-import { getAlbumCoverPlaceholder, getArtistPortraitPlaceholder, getUserAvatarPlaceholder } from '@/lib/placeholders';
+import { getAlbumCoverUri, getArtistPortraitPlaceholder, getUserAvatarPlaceholder } from '@/lib/placeholders';
 import { formatRating, toNumericRating } from '@/lib/rating';
-import { useResponsiveLayout } from '@/lib/responsive';
+import { getFluidGridItemStyle, useResponsiveLayout } from '@/lib/responsive';
 import type { Album, Artist, Review } from '@/lib/types';
 import { useReducedMotionPreference } from '@/lib/use-reduced-motion';
 import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { useMemo } from 'react';
 import { Platform, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-
-function getEntering(shouldReduceMotion: boolean, delay: number) {
-  if (shouldReduceMotion) {
-    return undefined;
-  }
-  return FadeInDown.duration(DesignTokens.motion.durationSlow).delay(delay);
-}
 
 function formatCompactCount(value: number) {
   if (value >= 1_000_000) {
@@ -102,7 +94,15 @@ export default function HomeScreen() {
       ? undefined
       : <RefreshControl refreshing={homeFeedQuery.isRefetching || loading} onRefresh={() => homeFeedQuery.refetch()} />;
 
-  const quickActionWidth = isDesktop ? '32%' : isTablet ? '48.5%' : '100%';
+  const fluidQuickActionItemStyle = getFluidGridItemStyle({
+    isDesktop,
+    isTablet,
+    minWidth: 220,
+    maxWidth: 320,
+    nativeDesktopWidth: '32%',
+    nativeTabletWidth: '48.5%',
+    nativeMobileWidth: '100%',
+  });
   const discoveryCardDimensions = isDesktop
     ? { featuredWidth: 390, featuredHeight: 432, featuredImageHeight: 216, sideWidth: 280, sideHeight: 96, sideImageSize: 72 }
     : isTablet
@@ -115,11 +115,38 @@ export default function HomeScreen() {
           sideImageSize: 72,
         }
       : { featuredWidth: 280, featuredHeight: 404, featuredImageHeight: 198, sideWidth: 280, sideHeight: 88, sideImageSize: 68 };
+  const fluidDiscoveryFeaturedItemStyle = getFluidGridItemStyle({
+    isDesktop,
+    isTablet,
+    minWidth: 220,
+    maxWidth: 320,
+    nativeMobileWidth: '100%',
+    nativeTabletWidth: discoveryCardDimensions.featuredWidth,
+    nativeDesktopWidth: discoveryCardDimensions.featuredWidth,
+  });
+  const fluidDiscoverySideItemStyle = getFluidGridItemStyle({
+    isDesktop,
+    isTablet,
+    minWidth: 220,
+    maxWidth: 320,
+    nativeMobileWidth: '100%',
+    nativeTabletWidth: discoveryCardDimensions.sideWidth,
+    nativeDesktopWidth: discoveryCardDimensions.sideWidth,
+  });
   const artistCardDimensions = isDesktop
     ? { width: 260, height: 226, imageHeight: 132 }
     : isTablet
       ? { width: 204, height: 212, imageHeight: 122 }
       : { width: 280, height: 208, imageHeight: 118 };
+  const fluidArtistItemStyle = getFluidGridItemStyle({
+    isDesktop,
+    isTablet,
+    minWidth: 220,
+    maxWidth: 320,
+    nativeMobileWidth: '100%',
+    nativeTabletWidth: artistCardDimensions.width,
+    nativeDesktopWidth: artistCardDimensions.width,
+  });
 
   return (
     <ScrollView
@@ -129,7 +156,7 @@ export default function HomeScreen() {
       refreshControl={mobileRefreshControl}
     >
       <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
-        <Animated.View entering={getEntering(shouldReduceMotion, 0)} style={styles.masthead}>
+        <View>
           <View style={styles.brandText}>
             <Text style={styles.brandEyebrow}>REVIEWEO</Text>
             <Text style={styles.brandMeta}>Music catalog and ratings</Text>
@@ -142,21 +169,21 @@ export default function HomeScreen() {
 
           <View style={styles.quickActionsRow}>
             <Link href="/charts" asChild>
-              <ScalePressable contentStyle={[styles.quickActionCard, { width: quickActionWidth }]}>
+              <ScalePressable containerStyle={fluidQuickActionItemStyle} contentStyle={styles.quickActionCard}>
                 <Text style={styles.quickActionTitle}>Charts</Text>
                 <Text style={styles.quickActionMeta}>Top-rated records right now</Text>
               </ScalePressable>
             </Link>
 
             <Link href="/reviews" asChild>
-              <ScalePressable contentStyle={[styles.quickActionCard, { width: quickActionWidth }]}>
+              <ScalePressable containerStyle={fluidQuickActionItemStyle} contentStyle={styles.quickActionCard}>
                 <Text style={styles.quickActionTitle}>Reviews</Text>
                 <Text style={styles.quickActionMeta}>Fresh writing from listeners</Text>
               </ScalePressable>
             </Link>
 
             <Link href="/search" asChild>
-              <ScalePressable contentStyle={[styles.quickActionCard, { width: quickActionWidth }]}>
+              <ScalePressable containerStyle={fluidQuickActionItemStyle} contentStyle={styles.quickActionCard}>
                 <Text style={styles.quickActionTitle}>Search</Text>
                 <Text style={styles.quickActionMeta}>Artists, albums, and deep cuts</Text>
               </ScalePressable>
@@ -185,25 +212,25 @@ export default function HomeScreen() {
               </View>
             </View>
           )}
-        </Animated.View>
+        </View>
 
         {error ? (
-          <Animated.View entering={getEntering(shouldReduceMotion, 70)} style={styles.errorBanner}>
+          <View>
             <Text style={styles.errorText}>{error}</Text>
-          </Animated.View>
+          </View>
         ) : null}
 
         {loading ? (
-          <Animated.View entering={getEntering(shouldReduceMotion, 120)} style={styles.loadingState}>
+          <View>
             <Text style={styles.loadingTitle}>Building your feed</Text>
             <Text style={styles.loadingText}>Fetching albums, artists, and recent reviews.</Text>
-          </Animated.View>
+          </View>
         ) : null}
 
         {!loading ? (
           <View style={[styles.feedColumns, isDesktop ? styles.feedColumnsDesktop : styles.feedColumnsMobile]}>
             <View style={[styles.primaryColumn, isDesktop ? styles.primaryColumnDesktop : null]}>
-              <Animated.View entering={getEntering(shouldReduceMotion, 140)} style={styles.section}>
+              <View>
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionTitle}>Discovery</Text>
                   <Text style={styles.sectionMeta}>Top listener picks this week</Text>
@@ -211,61 +238,73 @@ export default function HomeScreen() {
 
                 {heroAlbum ? (
                   <View style={[styles.discoveryLayout, isDesktop ? styles.discoveryDesktop : styles.discoveryMobile]}>
-                    <Link href={{ pathname: '/album/[id]', params: { id: String(heroAlbum.id) } }} asChild>
-                      <ScalePressable
-                        contentStyle={[
-                          styles.featuredAlbumCard,
-                          {
-                            width: discoveryCardDimensions.featuredWidth,
-                            height: discoveryCardDimensions.featuredHeight,
-                          },
-                        ]}
-                      >
-                        <Image
-                          source={{
-                            uri: getAlbumCoverPlaceholder(heroAlbum.id, heroAlbum.title, heroAlbum.artist_name),
-                          }}
-                          style={[styles.featuredAlbumImage, { height: discoveryCardDimensions.featuredImageHeight }]}
-                          contentFit="cover"
-                          transition={shouldReduceMotion ? 0 : 200}
-                        />
-                        <View style={styles.featuredAlbumBody}>
-                          <Text numberOfLines={1} style={styles.featuredOverline}>
-                            Album of the moment
-                          </Text>
-                          <Text numberOfLines={2} style={styles.featuredTitle}>
-                            {heroAlbum.title}
-                          </Text>
-                          <Text numberOfLines={1} style={styles.featuredArtist}>
-                            {heroAlbum.artist_name}
-                          </Text>
-                          <Text numberOfLines={1} style={styles.featuredMeta}>
-                            {heroAlbum.release_year} • Avg {formatRating(heroAlbum.average_rating)} •{' '}
-                            {formatCompactCount(heroAlbum.ratings_count)} ratings
-                          </Text>
-                        </View>
-                      </ScalePressable>
-                    </Link>
+                    <View style={fluidDiscoveryFeaturedItemStyle}>
+                      <Link href={{ pathname: '/album/[id]', params: { id: String(heroAlbum.id) } }} asChild>
+                        <ScalePressable
+                          contentStyle={[
+                            styles.featuredAlbumCard,
+                            {
+                              height: discoveryCardDimensions.featuredHeight,
+                            },
+                          ]}
+                        >
+                          <Image
+                            source={{
+                              uri: getAlbumCoverUri({
+                                albumId: heroAlbum.id,
+                                title: heroAlbum.title,
+                                artist: heroAlbum.artist_name,
+                                coverImageUrl: heroAlbum.cover_image_url,
+                                coverImage: heroAlbum.cover_image,
+                              }),
+                            }}
+                            style={[styles.featuredAlbumImage, { height: discoveryCardDimensions.featuredImageHeight }]}
+                            contentFit="cover"
+                            transition={shouldReduceMotion ? 0 : 200}
+                          />
+                          <View style={styles.featuredAlbumBody}>
+                            <Text numberOfLines={1} style={styles.featuredOverline}>
+                              Album of the moment
+                            </Text>
+                            <Text numberOfLines={2} style={styles.featuredTitle}>
+                              {heroAlbum.title}
+                            </Text>
+                            <Text numberOfLines={1} style={styles.featuredArtist}>
+                              {heroAlbum.artist_name}
+                            </Text>
+                            <Text numberOfLines={1} style={styles.featuredMeta}>
+                              {heroAlbum.release_year} • Avg {formatRating(heroAlbum.average_rating)} •{' '}
+                              {formatCompactCount(heroAlbum.ratings_count)} ratings
+                            </Text>
+                          </View>
+                        </ScalePressable>
+                      </Link>
+                    </View>
 
-                    <View style={[styles.discoveryColumn, { width: discoveryCardDimensions.sideWidth }]}>
+                    <View style={[styles.discoveryColumn, fluidDiscoverySideItemStyle]}>
                       {sideAlbums.map((album, index) => (
-                        <Animated.View
+                        <View
                           key={album.id}
-                          entering={getEntering(shouldReduceMotion, 180 + index * DesignTokens.motion.stagger)}
+                          style={styles.sideAlbumItem}
                         >
                           <Link href={{ pathname: '/album/[id]', params: { id: String(album.id) } }} asChild>
                             <ScalePressable
                               contentStyle={[
                                 styles.sideAlbumRow,
                                 {
-                                  width: discoveryCardDimensions.sideWidth,
                                   height: discoveryCardDimensions.sideHeight,
                                 },
                               ]}
                             >
                               <Image
                                 source={{
-                                  uri: getAlbumCoverPlaceholder(album.id, album.title, album.artist_name),
+                                  uri: getAlbumCoverUri({
+                                    albumId: album.id,
+                                    title: album.title,
+                                    artist: album.artist_name,
+                                    coverImageUrl: album.cover_image_url,
+                                    coverImage: album.cover_image,
+                                  }),
                                 }}
                                 style={[
                                   styles.sideAlbumImage,
@@ -290,7 +329,7 @@ export default function HomeScreen() {
                               </View>
                             </ScalePressable>
                           </Link>
-                        </Animated.View>
+                        </View>
                       ))}
                     </View>
                   </View>
@@ -300,11 +339,11 @@ export default function HomeScreen() {
                     <Text style={styles.emptyText}>Once records are added, discovery highlights will appear here.</Text>
                   </View>
                 )}
-              </Animated.View>
+              </View>
             </View>
 
             <View style={[styles.secondaryColumn, isDesktop ? styles.secondaryColumnDesktop : null]}>
-              <Animated.View entering={getEntering(shouldReduceMotion, 260)} style={styles.section}>
+              <View>
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionTitle}>Latest voices</Text>
                   <Text style={styles.sectionMeta}>Recent reviews from the community</Text>
@@ -318,9 +357,8 @@ export default function HomeScreen() {
                 ) : (
                   <View style={styles.reviewList}>
                     {featuredReviews.map((review, index) => (
-                      <Animated.View
+                      <View
                         key={review.id}
-                        entering={getEntering(shouldReduceMotion, 300 + index * DesignTokens.motion.stagger)}
                       >
                         <Link href={{ pathname: '/review/[id]', params: { id: String(review.id) } }} asChild>
                           <ScalePressable contentStyle={styles.reviewCard}>
@@ -345,13 +383,13 @@ export default function HomeScreen() {
                             </View>
                           </ScalePressable>
                         </Link>
-                      </Animated.View>
+                      </View>
                     ))}
                   </View>
                 )}
-              </Animated.View>
+              </View>
 
-              <Animated.View entering={getEntering(shouldReduceMotion, 340)} style={styles.section}>
+              <View>
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionTitle}>Artists to watch</Text>
                   <Text style={styles.sectionMeta}>The most followed profiles right now</Text>
@@ -365,15 +403,15 @@ export default function HomeScreen() {
                 ) : (
                   <View style={[styles.artistGrid, !isDesktop && !isTablet ? styles.artistGridMobile : null]}>
                     {trendingArtists.map((artist, index) => (
-                      <Animated.View
+                      <View
                         key={artist.id}
-                        entering={getEntering(shouldReduceMotion, 380 + index * DesignTokens.motion.stagger)}
+                        style={fluidArtistItemStyle}
                       >
                         <Link href={{ pathname: '/artist/[id]', params: { id: String(artist.id) } }} asChild>
                           <ScalePressable
                             contentStyle={[
                               styles.artistCard,
-                              { width: artistCardDimensions.width, height: artistCardDimensions.height },
+                              { height: artistCardDimensions.height },
                             ]}
                           >
                             <Image
@@ -390,11 +428,11 @@ export default function HomeScreen() {
                             </Text>
                           </ScalePressable>
                         </Link>
-                      </Animated.View>
+                      </View>
                     ))}
                   </View>
                 )}
-              </Animated.View>
+              </View>
             </View>
           </View>
         ) : null}
@@ -493,7 +531,8 @@ const styles = StyleSheet.create({
     borderRadius: DesignTokens.radius.sm,
     backgroundColor: DesignTokens.colors.surfaceMuted,
     paddingHorizontal: DesignTokens.spacing.sm,
-    paddingVertical: 8,
+    paddingTop: 7,
+    paddingBottom: 5,
     alignSelf: 'flex-start',
   },
   sessionLinkText: {
@@ -624,6 +663,9 @@ const styles = StyleSheet.create({
   },
   discoveryColumn: {
     gap: DesignTokens.spacing.sm,
+  },
+  sideAlbumItem: {
+    width: '100%',
   },
   sideAlbumRow: {
     borderWidth: 1,

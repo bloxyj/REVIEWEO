@@ -43,12 +43,6 @@ docker compose down -v
 docker compose up --build
 ```
 
-To apply only the latest review seed migration on an existing volume:
-
-```bash
-docker exec -i revieweo-mysql mysql -u revieweo -previeweo_password revieweo < backend/migrations/004_seed_album_reviews_mock_data.sql
-```
-
 ## Health
 
 - GET /api
@@ -120,6 +114,18 @@ Legacy admin review deletion alias remains available:
   - Optional query params: artist_id, release_type, limit
 - GET /api/albums/{id}
 - GET /api/albums/{id}/tracks
+
+Album payloads now include:
+
+- `cover_image` (stored filename)
+- `cover_image_url` (fully qualified API URL)
+
+## Images
+
+- GET /api/images/albums/{id}
+  - Resolves the album cover from DB mapping and returns `image/webp`.
+- GET /api/images/kanye/{filename}
+  - Returns a specific Kanye image file from `backend/public/imgs/kanye/`.
 
 ## Search
 

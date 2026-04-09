@@ -23,6 +23,7 @@ export function ScalePressable({
   containerStyle,
   contentStyle,
   pressScale = DesignTokens.motion.pressScale,
+  accessibilityRole = 'link',
   hitSlop,
   onPressIn,
   onPressOut,
@@ -50,7 +51,14 @@ export function ScalePressable({
   };
 
   return (
-    <Pressable {...props} style={containerStyle} onPressIn={handlePressIn} onPressOut={handlePressOut} hitSlop={hitSlop ?? 6}>
+    <Pressable
+      {...props}
+      accessibilityRole={accessibilityRole}
+      style={containerStyle}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      hitSlop={hitSlop ?? 6}
+    >
       <Animated.View style={[styles.content, animatedStyle, contentStyle]}>{children}</Animated.View>
     </Pressable>
   );

@@ -11,20 +11,11 @@ import {
   listAdminUsers,
   listReviews,
 } from '@/lib/api';
-import { useResponsiveLayout } from '@/lib/responsive';
+import { getFluidGridItemStyle, useResponsiveLayout } from '@/lib/responsive';
 import type { AuthUser, Review } from '@/lib/types';
-import { useReducedMotionPreference } from '@/lib/use-reduced-motion';
 import { Link } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Platform, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-
-function getEntering(shouldReduceMotion: boolean, delay: number) {
-  if (shouldReduceMotion) {
-    return undefined;
-  }
-  return FadeInDown.duration(DesignTokens.motion.durationSlow).delay(delay);
-}
 
 function formatDate(value: string): string {
   const date = new Date(value);
@@ -47,7 +38,6 @@ function formatRole(role: AuthUser['role']): string {
 export default function AdminScreen() {
   const { session, isAdmin } = useAuth();
   const { isDesktop, isTablet, contentMaxWidth, horizontalPadding } = useResponsiveLayout();
-  const shouldReduceMotion = useReducedMotionPreference();
 
   const [users, setUsers] = useState<AuthUser[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -80,7 +70,15 @@ export default function AdminScreen() {
 
   const adminCount = useMemo(() => users.filter((user) => user.role === 'admin').length, [users]);
   const pinnedCount = useMemo(() => reviews.filter((review) => review.is_pinned === 1).length, [reviews]);
-  const cardWidth = isDesktop ? '49%' : isTablet ? '48.5%' : '100%';
+  const fluidCardItemStyle = getFluidGridItemStyle({
+    isDesktop,
+    isTablet,
+    minWidth: 220,
+    maxWidth: 320,
+    nativeDesktopWidth: '49%',
+    nativeTabletWidth: '48.5%',
+    nativeMobileWidth: '100%',
+  });
 
   const onUpdateRole = async (user: AuthUser) => {
     if (!session) {
@@ -94,8 +92,8 @@ export default function AdminScreen() {
     try {
       await adminUpdateUserRole(session.token, user.id, nextRole);
       await loadData();
-    } catch {
-      setError('Failed to update user role.');
+    } catch (updateError) {
+      setError(updateError instanceof Error ? updateError.message : 'Failed to update user role.');
     }
   };
 
@@ -113,8 +111,8 @@ export default function AdminScreen() {
           try {
             await adminDeleteUser(session.token, user.id);
             await loadData();
-          } catch {
-            setError('Failed to delete user.');
+          } catch (deleteError) {
+            setError(deleteError instanceof Error ? deleteError.message : 'Failed to delete user.');
           }
         },
       },
@@ -129,8 +127,8 @@ export default function AdminScreen() {
     try {
       await adminPinReview(session.token, review.id, review.is_pinned !== 1);
       await loadData();
-    } catch {
-      setError('Pin action failed.');
+    } catch (pinError) {
+      setError(pinError instanceof Error ? pinError.message : 'Pin action failed.');
     }
   };
 
@@ -142,8 +140,8 @@ export default function AdminScreen() {
     try {
       await adminDeleteReview(session.token, reviewId);
       await loadData();
-    } catch {
-      setError('Delete action failed.');
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : 'Delete action failed.');
     }
   };
 
@@ -154,11 +152,11 @@ export default function AdminScreen() {
     return (
       <ScrollView style={styles.screen} contentContainerStyle={[styles.container, { paddingHorizontal: horizontalPadding }]}>
         <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
-          <Animated.View entering={getEntering(shouldReduceMotion, 0)} style={styles.topBar}>
+          <View>
             <BackNavButton />
-          </Animated.View>
+          </View>
 
-          <Animated.View entering={getEntering(shouldReduceMotion, 70)} style={styles.heroCard}>
+          <View>
             <Text style={styles.heroEyebrow}>Restricted area</Text>
             <Text style={styles.heroTitle}>Admin access required</Text>
             <Text style={styles.heroSubtitle}>
@@ -169,7 +167,7 @@ export default function AdminScreen() {
                 <Text style={styles.inlineLinkText}>Go to login</Text>
               </ScalePressable>
             </Link>
-          </Animated.View>
+          </View>
         </View>
       </ScrollView>
     );
@@ -182,14 +180,14 @@ export default function AdminScreen() {
       refreshControl={mobileRefreshControl}
     >
       <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
-        <Animated.View entering={getEntering(shouldReduceMotion, 0)} style={styles.topBar}>
+        <View>
           <BackNavButton />
           {Platform.OS === 'web' ? (
             <LiquidGlassButton label="Refresh data" variant="secondary" size="sm" onPress={loadData} />
           ) : null}
-        </Animated.View>
+        </View>
 
-        <Animated.View entering={getEntering(shouldReduceMotion, 40)} style={styles.heroCard}>
+        <View>
           <Text style={styles.heroEyebrow}>Administration</Text>
           <Text style={styles.heroTitle}>Moderation and user controls</Text>
           <Text style={styles.heroSubtitle}>
@@ -210,22 +208,22 @@ export default function AdminScreen() {
               <Text style={styles.metricValue}>{pinnedCount.toLocaleString()}</Text>
             </View>
           </View>
-        </Animated.View>
+        </View>
 
         {error ? (
-          <Animated.View entering={getEntering(shouldReduceMotion, 80)} style={styles.errorBanner}>
+          <View>
             <Text style={styles.errorText}>{error}</Text>
-          </Animated.View>
+          </View>
         ) : null}
 
         {loading && users.length === 0 && reviews.length === 0 ? (
-          <Animated.View entering={getEntering(shouldReduceMotion, 110)} style={styles.loadingState}>
+          <View>
             <Text style={styles.loadingTitle}>Refreshing admin data</Text>
             <Text style={styles.loadingText}>Fetching user roles and the moderation queue.</Text>
-          </Animated.View>
+          </View>
         ) : null}
 
-        <Animated.View entering={getEntering(shouldReduceMotion, 130)} style={styles.section}>
+        <View>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Users management</Text>
             <Text style={styles.sectionMeta}>{users.length} accounts loaded</Text>
@@ -256,10 +254,9 @@ export default function AdminScreen() {
                       : styles.roleTextUser;
 
                 return (
-                  <Animated.View
+                  <View
                     key={user.id}
-                    entering={getEntering(shouldReduceMotion, 170 + Math.min(index, 8) * DesignTokens.motion.stagger)}
-                    style={[styles.card, { width: cardWidth }]}
+                    style={[styles.card, fluidCardItemStyle]}
                   >
                     <View style={styles.cardHeader}>
                       <Text numberOfLines={1} style={styles.cardTitle}>
@@ -296,14 +293,14 @@ export default function AdminScreen() {
                         <Text style={styles.helperText}>Protected account</Text>
                       )}
                     </View>
-                  </Animated.View>
+                  </View>
                 );
               })}
             </View>
           )}
-        </Animated.View>
+        </View>
 
-        <Animated.View entering={getEntering(shouldReduceMotion, 220)} style={styles.section}>
+        <View>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Review moderation</Text>
             <Text style={styles.sectionMeta}>{reviews.length} reviews in queue</Text>
@@ -317,10 +314,9 @@ export default function AdminScreen() {
           ) : (
             <View style={styles.grid}>
               {reviews.map((review, index) => (
-                <Animated.View
+                <View
                   key={review.id}
-                  entering={getEntering(shouldReduceMotion, 260 + Math.min(index, 8) * DesignTokens.motion.stagger)}
-                  style={[styles.card, { width: cardWidth }]}
+                  style={[styles.card, fluidCardItemStyle]}
                 >
                   <View style={styles.cardHeader}>
                     <Text numberOfLines={1} style={styles.cardTitle}>
@@ -365,11 +361,11 @@ export default function AdminScreen() {
                       onPress={() => onDeleteReview(review.id)}
                     />
                   </View>
-                </Animated.View>
+                </View>
               ))}
             </View>
           )}
-        </Animated.View>
+        </View>
       </View>
     </ScrollView>
   );

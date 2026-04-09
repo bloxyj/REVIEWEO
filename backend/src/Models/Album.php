@@ -29,6 +29,7 @@ final class Album
 				a.release_year,
 				a.release_type,
 				a.collaborators,
+				a.cover_image,
 				a.average_rating,
 				a.ratings_count,
 				a.reviews_count,
@@ -75,6 +76,7 @@ final class Album
 				a.release_year,
 				a.release_type,
 				a.collaborators,
+				a.cover_image,
 				a.average_rating,
 				a.ratings_count,
 				a.reviews_count,
@@ -91,6 +93,21 @@ final class Album
 		$album = $statement->fetch();
 
 		return $album === false ? null : $album;
+	}
+
+	public function getCoverImageById(int $id): ?string
+	{
+		$query = 'SELECT cover_image FROM albums WHERE id = :id LIMIT 1';
+		$statement = $this->db->prepare($query);
+		$statement->execute(['id' => $id]);
+		$value = $statement->fetchColumn();
+
+		if ($value === false) {
+			return null;
+		}
+
+		$coverImage = trim((string) $value);
+		return $coverImage === '' ? null : $coverImage;
 	}
 
 	/**

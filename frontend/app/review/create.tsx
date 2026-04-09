@@ -2,6 +2,7 @@ import { BackNavButton } from '@/components/navigation/BackNavButton';
 import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
 import { ScalePressable } from '@/components/ui/ScalePressable';
 import { DesignTokens } from '@/constants/design-system';
+import { API_BASE_URL } from '@/lib/config';
 import { useAuth } from '@/context/auth-context';
 import { createAlbumReview } from '@/lib/api';
 import { getAlbumCoverPlaceholder, getUserAvatarPlaceholder } from '@/lib/placeholders';
@@ -11,14 +12,6 @@ import { Image } from 'expo-image';
 import { Link, useRouter } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { Alert, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-
-function getEntering(shouldReduceMotion: boolean, delay: number) {
-  if (shouldReduceMotion) {
-    return undefined;
-  }
-  return FadeInDown.duration(DesignTokens.motion.durationSlow).delay(delay);
-}
 
 export default function CreateReviewScreen() {
   const router = useRouter();
@@ -44,10 +37,13 @@ export default function CreateReviewScreen() {
   const hasValidAlbumId = Number.isInteger(parsedAlbumId) && parsedAlbumId > 0;
   const previewTitle = title.trim() === '' ? 'Untitled Review' : title.trim();
 
-  const coverPreview = useMemo(
-    () => getAlbumCoverPlaceholder(hasValidAlbumId ? parsedAlbumId : 0, previewTitle, reviewerName),
-    [hasValidAlbumId, parsedAlbumId, previewTitle, reviewerName]
-  );
+  const coverPreview = useMemo(() => {
+    if (hasValidAlbumId) {
+      return `${API_BASE_URL}/images/albums/${parsedAlbumId}`;
+    }
+
+    return getAlbumCoverPlaceholder(0, previewTitle, reviewerName);
+  }, [hasValidAlbumId, parsedAlbumId, previewTitle, reviewerName]);
 
   const reviewerPreview = useMemo(
     () => getUserAvatarPlaceholder(reviewerId, reviewerName),
@@ -106,11 +102,11 @@ export default function CreateReviewScreen() {
         contentContainerStyle={[styles.container, { paddingHorizontal: horizontalPadding }]}
       >
         <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
-          <Animated.View entering={getEntering(shouldReduceMotion, 0)} style={styles.topBar}>
+          <View>
             <BackNavButton fallbackHref="/reviews" label="Back to reviews" />
-          </Animated.View>
+          </View>
 
-          <Animated.View entering={getEntering(shouldReduceMotion, 60)} style={styles.accessCard}>
+          <View>
             <Text style={styles.accessTitle}>Access denied</Text>
             <Text style={styles.accessText}>Only critics and admins can write reviews.</Text>
             <Link href="/reviews" asChild>
@@ -118,7 +114,7 @@ export default function CreateReviewScreen() {
                 <Text style={styles.inlineLinkText}>Browse published reviews</Text>
               </ScalePressable>
             </Link>
-          </Animated.View>
+          </View>
         </View>
       </ScrollView>
     );
@@ -131,11 +127,11 @@ export default function CreateReviewScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
-        <Animated.View entering={getEntering(shouldReduceMotion, 0)} style={styles.topBar}>
+        <View>
           <BackNavButton fallbackHref="/reviews" label="Back to reviews" />
-        </Animated.View>
+        </View>
 
-        <Animated.View entering={getEntering(shouldReduceMotion, 70)} style={styles.section}>
+        <View>
           <View style={[styles.heroCard, isDesktop ? styles.heroDesktop : styles.heroMobile]}>
             <Image
               source={{ uri: coverPreview }}
@@ -165,15 +161,15 @@ export default function CreateReviewScreen() {
               </View>
             </View>
           </View>
-        </Animated.View>
+        </View>
 
         {error ? (
-          <Animated.View entering={getEntering(shouldReduceMotion, 120)} style={styles.errorBanner}>
+          <View>
             <Text style={styles.errorText}>{error}</Text>
-          </Animated.View>
+          </View>
         ) : null}
 
-        <Animated.View entering={getEntering(shouldReduceMotion, 150)} style={styles.section}>
+        <View>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Review form</Text>
             <Text style={styles.sectionMeta}>All fields are required to publish.</Text>
@@ -257,7 +253,7 @@ export default function CreateReviewScreen() {
               </Link>
             </View>
           </View>
-        </Animated.View>
+        </View>
       </View>
     </ScrollView>
   );

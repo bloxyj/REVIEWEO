@@ -2,30 +2,15 @@ import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
 import { ScalePressable } from '@/components/ui/ScalePressable';
 import { DesignTokens } from '@/constants/design-system';
 import { listAlbums } from '@/lib/api';
-import { getAlbumCoverPlaceholder } from '@/lib/placeholders';
+import { getAlbumCoverUri } from '@/lib/placeholders';
 import { formatRating } from '@/lib/rating';
-import { useResponsiveLayout } from '@/lib/responsive';
+import { getFluidGridItemStyle, useResponsiveLayout } from '@/lib/responsive';
 import type { Album } from '@/lib/types';
 import { useReducedMotionPreference } from '@/lib/use-reduced-motion';
 import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Platform, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-
-function getEntering(shouldReduceMotion: boolean, delay: number) {
-  if (shouldReduceMotion) {
-    return undefined;
-  }
-  return FadeInDown.duration(DesignTokens.motion.durationSlow).delay(delay);
-}
-
-function getListEntering(shouldReduceMotion: boolean, baseDelay: number, index: number) {
-  if (index >= 8) {
-    return undefined;
-  }
-  return getEntering(shouldReduceMotion, baseDelay + index * DesignTokens.motion.stagger);
-}
 
 export default function AlbumsScreen() {
   const { isDesktop, isTablet, contentMaxWidth, horizontalPadding } = useResponsiveLayout();
@@ -75,6 +60,15 @@ export default function AlbumsScreen() {
     : isTablet
       ? { width: 256, height: 396, mediaHeight: 208, bodyHeight: 188 }
       : { width: 232, height: 372, mediaHeight: 196, bodyHeight: 176 };
+  const fluidCardItemStyle = getFluidGridItemStyle({
+    isDesktop,
+    isTablet,
+    minWidth: 220,
+    maxWidth: 320,
+    nativeMobileWidth: '100%',
+    nativeTabletWidth: cardDimensions.width,
+    nativeDesktopWidth: cardDimensions.width,
+  });
 
   const mobileRefreshControl =
     Platform.OS === 'web' ? undefined : <RefreshControl refreshing={loading} onRefresh={loadAlbums} />;
@@ -87,7 +81,7 @@ export default function AlbumsScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
-        <Animated.View entering={getEntering(shouldReduceMotion, 0)} style={styles.masthead}>
+        <View>
           <View style={styles.headerRow}>
             <View style={styles.headerCopy}>
               <Text style={styles.eyebrow}>Catalog</Text>
@@ -116,41 +110,49 @@ export default function AlbumsScreen() {
               Showing {filtered.length.toLocaleString()} of {albums.length.toLocaleString()} albums
             </Text>
           </View>
-        </Animated.View>
+        </View>
 
         {error ? (
-          <Animated.View entering={getEntering(shouldReduceMotion, 70)} style={styles.errorBanner}>
+          <View>
             <Text style={styles.errorText}>{error}</Text>
-          </Animated.View>
+          </View>
         ) : null}
 
         {loading ? (
-          <Animated.View entering={getEntering(shouldReduceMotion, 120)} style={styles.loadingState}>
+          <View>
             <Text style={styles.loadingTitle}>Loading albums</Text>
             <Text style={styles.loadingText}>Gathering latest ratings and release metadata.</Text>
-          </Animated.View>
+          </View>
         ) : null}
 
         {!loading && !error && filtered.length === 0 ? (
-          <Animated.View entering={getEntering(shouldReduceMotion, 170)} style={styles.emptyState}>
+          <View>
             <Text style={styles.emptyTitle}>No albums found</Text>
             <Text style={styles.emptyText}>Try a shorter query or clear filters to browse the full catalog.</Text>
-          </Animated.View>
+          </View>
         ) : null}
 
         {!loading && !error && filtered.length > 0 ? (
           <View style={styles.albumGrid}>
             {filtered.map((album, index) => (
-              <Animated.View
+              <View
                 key={album.id}
-                entering={getListEntering(shouldReduceMotion, 210, index)}
+                style={fluidCardItemStyle}
               >
                 <Link href={{ pathname: '/album/[id]', params: { id: String(album.id) } }} asChild>
                   <ScalePressable
-                    contentStyle={[styles.albumCard, { width: cardDimensions.width, height: cardDimensions.height }]}
+                    contentStyle={[styles.albumCard, { height: cardDimensions.height }]}
                   >
                     <Image
-                      source={{ uri: getAlbumCoverPlaceholder(album.id, album.title, album.artist_name) }}
+                      source={{
+                        uri: getAlbumCoverUri({
+                          albumId: album.id,
+                          title: album.title,
+                          artist: album.artist_name,
+                          coverImageUrl: album.cover_image_url,
+                          coverImage: album.cover_image,
+                        }),
+                      }}
                       style={[styles.albumImage, { height: cardDimensions.mediaHeight }]}
                       contentFit="cover"
                       transition={shouldReduceMotion ? 0 : 190}
@@ -187,7 +189,7 @@ export default function AlbumsScreen() {
                     </View>
                   </ScalePressable>
                 </Link>
-              </Animated.View>
+              </View>
             ))}
           </View>
         ) : null}

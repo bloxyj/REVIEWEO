@@ -3,55 +3,55 @@ import { ScalePressable } from '@/components/ui/ScalePressable';
 import { DesignTokens } from '@/constants/design-system';
 import { useAuth } from '@/context/auth-context';
 import { getUserAvatarPlaceholder } from '@/lib/placeholders';
-import { useResponsiveLayout } from '@/lib/responsive';
+import { getFluidGridItemStyle, useResponsiveLayout } from '@/lib/responsive';
 import { useReducedMotionPreference } from '@/lib/use-reduced-motion';
 import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 
 const BROWSE_LINKS = [
   {
-    label: 'Notifications',
-    description: 'Review activity and latest updates.',
-    href: '/reviews',
+    label: 'Charts',
+    description: 'See top-rated albums by filters and community score.',
+    href: '/charts',
   },
   {
-    label: 'Privacy and security',
-    description: 'Adjust privacy defaults and account safety.',
-    href: '/reviews',
+    label: 'Search catalog',
+    description: 'Jump to artists and albums in one query.',
+    href: '/search',
   },
   {
-    label: 'Connected accounts',
-    description: 'Manage third-party connections and integrations.',
+    label: 'Community reviews',
+    description: 'Read the latest listener and critic write-ups.',
     href: '/reviews',
   },
 ] as const;
-
-function getEntering(shouldReduceMotion: boolean, delay: number) {
-  if (shouldReduceMotion) {
-    return undefined;
-  }
-  return FadeInDown.duration(DesignTokens.motion.durationSlow).delay(delay);
-}
 
 export default function SettingsScreen() {
   const { session, clearSession } = useAuth();
   const { isDesktop, isTablet, contentMaxWidth, horizontalPadding } = useResponsiveLayout();
   const shouldReduceMotion = useReducedMotionPreference();
 
-  const linkWidth = isDesktop ? '48.5%' : isTablet ? '48.5%' : '100%';
+  const fluidLinkItemStyle = getFluidGridItemStyle({
+    isDesktop,
+    isTablet,
+    minWidth: 220,
+    maxWidth: 320,
+    nativeDesktopWidth: '48.5%',
+    nativeTabletWidth: '48.5%',
+    nativeMobileWidth: '100%',
+  });
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={[styles.container, { paddingHorizontal: horizontalPadding }]}>
       <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
-        <Animated.View entering={getEntering(shouldReduceMotion, 0)} style={styles.masthead}>
+        <View>
           <Text style={styles.eyebrow}>Account</Text>
           <Text style={styles.title}>Settings</Text>
           <Text style={styles.subtitle}>Manage your session, account shortcuts, and profile controls from one place.</Text>
-        </Animated.View>
+        </View>
 
-        <Animated.View entering={getEntering(shouldReduceMotion, 70)} style={styles.section}>
+        <View>
           <Text style={styles.sectionTitle}>Account</Text>
 
           {session ? (
@@ -91,26 +91,26 @@ export default function SettingsScreen() {
               </View>
             </View>
           )}
-        </Animated.View>
+        </View>
 
-        <Animated.View entering={getEntering(shouldReduceMotion, 130)} style={styles.section}>
+        <View>
           <Text style={styles.sectionTitle}>Browse</Text>
           <View style={styles.linkGrid}>
             {BROWSE_LINKS.map((item, index) => (
-              <Animated.View
+              <View
                 key={item.label}
-                entering={getEntering(shouldReduceMotion, 170 + index * DesignTokens.motion.stagger)}
+                style={fluidLinkItemStyle}
               >
                 <Link href={item.href} asChild>
-                  <ScalePressable contentStyle={[styles.linkCard, { width: linkWidth }]}>
+                  <ScalePressable contentStyle={styles.linkCard}>
                     <Text style={styles.linkLabel}>{item.label}</Text>
                     <Text style={styles.linkDescription}>{item.description}</Text>
                   </ScalePressable>
                 </Link>
-              </Animated.View>
+              </View>
             ))}
           </View>
-        </Animated.View>
+        </View>
       </View>
     </ScrollView>
   );

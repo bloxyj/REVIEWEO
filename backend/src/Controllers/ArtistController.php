@@ -87,7 +87,7 @@ final class ArtistController extends ApiController
 
 			$albums = $this->artistModel->getAlbumsByArtist($artistId, $releaseType, (int) $limit);
 
-			return $this->success($albums);
+			return $this->success($this->withAlbumCoverUrls($albums));
 		});
 	}
 

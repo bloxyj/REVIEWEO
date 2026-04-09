@@ -1,7 +1,7 @@
 import { DesignTokens } from '@/constants/design-system';
 import { useReducedMotionPreference } from '@/lib/use-reduced-motion';
 import * as Haptics from 'expo-haptics';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   type AccessibilityRole,
@@ -51,6 +51,7 @@ export function LiquidGlassButton({
 }: LiquidGlassButtonProps) {
   const isDisabled = disabled || loading;
   const shouldReduceMotion = useReducedMotionPreference();
+  const [isFocused, setIsFocused] = useState(false);
 
   const handlePress = useCallback(() => {
     if (isDisabled) {
@@ -63,6 +64,14 @@ export function LiquidGlassButton({
 
     onPress();
   }, [isDisabled, onPress]);
+
+  const handleFocus = () => {
+    setIsFocused(true);
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+  };
 
   const renderStyle = useCallback(
     ({ pressed, hovered }: PressableStateCallbackType) => {
@@ -78,11 +87,12 @@ export function LiquidGlassButton({
         emphasized && !isDisabled ? styles.emphasized : null,
         emphasized && !isDisabled && isInverted ? styles.emphasizedInverted : null,
         pressed && !isDisabled && !shouldReduceMotion ? styles.pressed : null,
+        isFocused && !isDisabled ? styles.focused : null,
         isDisabled ? styles.disabled : null,
         style,
       ];
     },
-    [active, fullWidth, isDisabled, shouldReduceMotion, size, style, variant]
+    [active, fullWidth, isDisabled, isFocused, shouldReduceMotion, size, style, variant]
   );
 
   const resolvedTextStyle = [
@@ -102,6 +112,8 @@ export function LiquidGlassButton({
     <Pressable
       testID={testID}
       onPress={handlePress}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
       style={renderStyle}
       disabled={isDisabled}
       accessibilityRole={accessibilityRole}
@@ -198,7 +210,10 @@ const styles = StyleSheet.create({
     backgroundColor: DesignTokens.colors.surfaceMuted,
   },
   emphasizedInverted: {
-    backgroundColor: '#2A2723',
+    backgroundColor: DesignTokens.colors.inverseSurface,
+  },
+  focused: {
+    borderColor: DesignTokens.colors.accentBlueText,
   },
   pressed: {
     transform: [{ scale: DesignTokens.motion.pressScale }],

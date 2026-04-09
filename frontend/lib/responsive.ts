@@ -1,5 +1,5 @@
 import { Breakpoints, DesignTokens } from '@/constants/design-system';
-import { Platform, useWindowDimensions } from 'react-native';
+import { Platform, type ViewStyle, useWindowDimensions } from 'react-native';
 
 export type BreakpointName = 'mobile' | 'tablet' | 'desktop' | 'wide';
 
@@ -56,5 +56,43 @@ export function useResponsiveLayout() {
     isWide,
     horizontalPadding,
     contentMaxWidth,
+  };
+}
+
+type FluidGridItemStyleOptions = {
+  isDesktop: boolean;
+  isTablet: boolean;
+  minWidth: number;
+  maxWidth: number;
+  nativeMobileWidth?: number | `${number}%` | '100%';
+  nativeTabletWidth?: number | `${number}%` | '100%';
+  nativeDesktopWidth?: number | `${number}%` | '100%';
+};
+
+export function getFluidGridItemStyle({
+  isDesktop,
+  isTablet,
+  minWidth,
+  maxWidth,
+  nativeMobileWidth = '100%',
+  nativeTabletWidth = '48.5%',
+  nativeDesktopWidth = '49%',
+}: FluidGridItemStyleOptions): ViewStyle {
+  if (Platform.OS !== 'web') {
+    return {
+      width: isDesktop ? nativeDesktopWidth : isTablet ? nativeTabletWidth : nativeMobileWidth,
+    };
+  }
+
+  if (!isDesktop && !isTablet) {
+    return { width: '100%' };
+  }
+
+  return {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: minWidth,
+    minWidth,
+    maxWidth,
   };
 }

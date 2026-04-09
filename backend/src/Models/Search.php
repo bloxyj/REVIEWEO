@@ -54,6 +54,7 @@ final class Search
 				a.title,
 				a.release_year,
 				a.release_type,
+				a.cover_image,
 				a.average_rating,
 				a.ratings_count,
 				a.reviews_count,

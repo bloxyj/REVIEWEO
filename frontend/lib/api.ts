@@ -74,7 +74,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
         try {
             payload = JSON.parse(raw) as ApiEnvelope<T>;
         } catch {
-            throw new Error(`Le serveur a renvoyé une erreur formatée en HTML (Status ${response.status})`);
+            throw new Error(`Server returned HTML instead of JSON (status ${response.status}).`);
         }
     }
 

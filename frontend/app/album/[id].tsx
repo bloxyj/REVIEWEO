@@ -13,9 +13,9 @@ import {
   toggleReviewLike,
   updateReview,
 } from '@/lib/api';
-import { getAlbumCoverPlaceholder, getUserAvatarPlaceholder } from '@/lib/placeholders';
+import { getAlbumCoverUri, getUserAvatarPlaceholder } from '@/lib/placeholders';
 import { formatRating } from '@/lib/rating';
-import { useResponsiveLayout } from '@/lib/responsive';
+import { getFluidGridItemStyle, useResponsiveLayout } from '@/lib/responsive';
 import type { Album, AlbumTrack, Review } from '@/lib/types';
 import { useReducedMotionPreference } from '@/lib/use-reduced-motion';
 import { Image } from 'expo-image';
@@ -30,7 +30,6 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 
 function parseId(input: string | string[] | undefined): number | null {
   if (!input) {
@@ -45,20 +44,6 @@ function parseId(input: string | string[] | undefined): number | null {
   }
 
   return parsed;
-}
-
-function getEntering(shouldReduceMotion: boolean, delay: number) {
-  if (shouldReduceMotion) {
-    return undefined;
-  }
-  return FadeInDown.duration(DesignTokens.motion.durationSlow).delay(delay);
-}
-
-function getListEntering(shouldReduceMotion: boolean, baseDelay: number, index: number) {
-  if (index >= 8) {
-    return undefined;
-  }
-  return getEntering(shouldReduceMotion, baseDelay + index * DesignTokens.motion.stagger);
 }
 
 type AlbumDetailPayload = {
@@ -185,7 +170,15 @@ export default function AlbumDetailScreen() {
       { label: 'Reviews', value: album.reviews_count.toLocaleString() },
     ];
   }, [album]);
-  const trackCardWidth = isDesktop ? '49%' : isTablet ? '48.5%' : '100%';
+  const fluidTrackItemStyle = getFluidGridItemStyle({
+    isDesktop,
+    isTablet,
+    minWidth: 220,
+    maxWidth: 320,
+    nativeDesktopWidth: '49%',
+    nativeTabletWidth: '48.5%',
+    nativeMobileWidth: '100%',
+  });
   const trackCountLabel = `${sortedTracks.length} ${sortedTracks.length === 1 ? 'track' : 'tracks'}`;
   const reviewCountLabel = `${reviews.length} ${reviews.length === 1 ? 'entry' : 'entries'}`;
 
@@ -296,33 +289,41 @@ export default function AlbumDetailScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
-        <Animated.View entering={getEntering(shouldReduceMotion, 0)} style={styles.topBar}>
+        <View>
           <BackNavButton fallbackHref="/albums" label="Back to albums" />
           {Platform.OS === 'web' ? (
             <LiquidGlassButton label="Refresh" variant="secondary" size="sm" onPress={() => albumQuery.refetch()} />
           ) : null}
-        </Animated.View>
+        </View>
 
         {error ? (
-          <Animated.View entering={getEntering(shouldReduceMotion, 50)} style={styles.errorBanner}>
+          <View>
             <Text style={styles.errorText}>{error}</Text>
-          </Animated.View>
+          </View>
         ) : null}
 
         {loading ? (
-          <Animated.View entering={getEntering(shouldReduceMotion, 90)} style={styles.loadingState}>
+          <View>
             <Text style={styles.loadingTitle}>Loading album details</Text>
             <Text style={styles.loadingText}>Pulling tracks, reviews, and stats.</Text>
-          </Animated.View>
+          </View>
         ) : null}
 
         {!loading && album ? (
           <View style={[styles.detailColumns, isDesktop ? styles.detailColumnsDesktop : styles.detailColumnsMobile]}>
             <View style={[styles.detailPrimaryColumn, isDesktop ? styles.detailPrimaryColumnDesktop : null]}>
-              <Animated.View entering={getEntering(shouldReduceMotion, 120)} style={styles.section}>
+              <View>
                 <View style={[styles.heroCard, isDesktop ? styles.heroDesktop : styles.heroMobile]}>
                   <Image
-                    source={{ uri: getAlbumCoverPlaceholder(album.id, album.title, album.artist_name) }}
+                    source={{
+                      uri: getAlbumCoverUri({
+                        albumId: album.id,
+                        title: album.title,
+                        artist: album.artist_name,
+                        coverImageUrl: album.cover_image_url,
+                        coverImage: album.cover_image,
+                      }),
+                    }}
                     style={[styles.heroCover, isDesktop ? styles.heroCoverDesktop : null]}
                     contentFit="cover"
                     transition={shouldReduceMotion ? 0 : 220}
@@ -337,14 +338,13 @@ export default function AlbumDetailScreen() {
 
                     <View style={styles.statRow}>
                       {albumStats.map((stat, index) => (
-                        <Animated.View
+                        <View
                           key={stat.label}
-                          entering={getListEntering(shouldReduceMotion, 170, index)}
                           style={styles.statPill}
                         >
                           <Text style={styles.statLabel}>{stat.label}</Text>
                           <Text style={styles.statValue}>{stat.value}</Text>
-                        </Animated.View>
+                        </View>
                       ))}
                     </View>
 
@@ -353,9 +353,9 @@ export default function AlbumDetailScreen() {
                     </Text>
                   </View>
                 </View>
-              </Animated.View>
+              </View>
 
-              <Animated.View entering={getEntering(shouldReduceMotion, 250)} style={styles.sectionCard}>
+              <View>
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionKicker}>Your review</Text>
                   <Text style={styles.sectionTitle}>{ownReview ? 'Edit your entry' : 'Write a new entry'}</Text>
@@ -437,11 +437,11 @@ export default function AlbumDetailScreen() {
                     </View>
                   </View>
                 )}
-              </Animated.View>
+              </View>
             </View>
 
             <View style={[styles.detailSecondaryColumn, isDesktop ? styles.detailSecondaryColumnDesktop : null]}>
-              <Animated.View entering={getEntering(shouldReduceMotion, 180)} style={styles.sectionCard}>
+              <View>
                 <View style={styles.sectionHeaderRow}>
                   <View style={styles.sectionHeaderTight}>
                     <Text style={styles.sectionKicker}>Tracklist</Text>
@@ -458,11 +458,11 @@ export default function AlbumDetailScreen() {
                 ) : (
                   <View style={styles.trackGrid}>
                     {sortedTracks.map((track, index) => (
-                      <Animated.View
+                      <View
                         key={track.id}
-                        entering={getListEntering(shouldReduceMotion, 220, index)}
+                        style={fluidTrackItemStyle}
                       >
-                        <View style={[styles.trackCard, { width: trackCardWidth }]}>
+                        <View style={styles.trackCard}>
                           <Text style={styles.trackOrder}>{track.track_order.toString().padStart(2, '0')}</Text>
                           <View style={styles.trackBody}>
                             <Text numberOfLines={1} style={styles.trackTitle}>
@@ -474,13 +474,13 @@ export default function AlbumDetailScreen() {
                             </Text>
                           </View>
                         </View>
-                      </Animated.View>
+                      </View>
                     ))}
                   </View>
                 )}
-              </Animated.View>
+              </View>
 
-              <Animated.View entering={getEntering(shouldReduceMotion, 300)} style={styles.sectionCard}>
+              <View>
                 <View style={styles.sectionHeaderRow}>
                   <View style={styles.sectionHeaderTight}>
                     <Text style={styles.sectionKicker}>Community</Text>
@@ -497,9 +497,8 @@ export default function AlbumDetailScreen() {
                 ) : (
                   <View style={styles.reviewList}>
                     {reviews.map((review, index) => (
-                      <Animated.View
+                      <View
                         key={review.id}
-                        entering={getListEntering(shouldReduceMotion, 340, index)}
                       >
                         <View style={styles.reviewCard}>
                           <View style={styles.reviewHeader}>
@@ -539,11 +538,11 @@ export default function AlbumDetailScreen() {
                             />
                           </View>
                         </View>
-                      </Animated.View>
+                      </View>
                     ))}
                   </View>
                 )}
-              </Animated.View>
+              </View>
             </View>
           </View>
         ) : null}
@@ -574,7 +573,7 @@ const styles = StyleSheet.create({
   },
   errorBanner: {
     borderWidth: 1,
-    borderColor: '#E7C9CC',
+    borderColor: DesignTokens.colors.dangerSurface,
     borderRadius: DesignTokens.radius.md,
     backgroundColor: DesignTokens.colors.dangerSurface,
     paddingHorizontal: DesignTokens.spacing.md,
@@ -587,7 +586,7 @@ const styles = StyleSheet.create({
   },
   loadingState: {
     borderWidth: 1,
-    borderColor: '#DDD2C2',
+    borderColor: DesignTokens.colors.border,
     borderRadius: DesignTokens.radius.lg,
     backgroundColor: DesignTokens.colors.surface,
     padding: DesignTokens.spacing.xl,
@@ -635,13 +634,12 @@ const styles = StyleSheet.create({
   },
   heroCard: {
     borderWidth: 1,
-    borderColor: '#DCCFBF',
+    borderColor: DesignTokens.colors.border,
     borderRadius: DesignTokens.radius.xl,
     backgroundColor: DesignTokens.colors.surface,
     overflow: 'hidden',
     padding: DesignTokens.spacing.lg,
     gap: DesignTokens.spacing.lg,
-    boxShadow: '0 10px 24px rgba(47, 41, 35, 0.08)',
   },
   heroDesktop: {
     flexDirection: 'row',
@@ -696,9 +694,9 @@ const styles = StyleSheet.create({
   },
   statPill: {
     borderWidth: 1,
-    borderColor: '#DDCFBC',
+    borderColor: DesignTokens.colors.border,
     borderRadius: DesignTokens.radius.md,
-    backgroundColor: '#F7F0E4',
+    backgroundColor: DesignTokens.colors.surfaceMuted,
     paddingHorizontal: DesignTokens.spacing.md,
     paddingVertical: DesignTokens.spacing.sm,
     gap: 3,
@@ -725,7 +723,7 @@ const styles = StyleSheet.create({
   },
   sectionCard: {
     borderWidth: 1,
-    borderColor: '#DDCFBC',
+    borderColor: DesignTokens.colors.border,
     borderRadius: DesignTokens.radius.lg,
     backgroundColor: DesignTokens.colors.surface,
     padding: DesignTokens.spacing.lg,
@@ -775,12 +773,12 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: '#D9CAB7',
+    borderColor: DesignTokens.colors.border,
     borderRadius: DesignTokens.radius.md,
     paddingHorizontal: DesignTokens.spacing.sm,
     paddingVertical: 11,
     color: DesignTokens.colors.textPrimary,
-    backgroundColor: '#FBF6ED',
+    backgroundColor: DesignTokens.colors.surfaceMuted,
     fontSize: DesignTokens.typography.body,
   },
   textArea: {
@@ -794,9 +792,9 @@ const styles = StyleSheet.create({
   },
   emptyState: {
     borderWidth: 1,
-    borderColor: '#D8CABA',
+    borderColor: DesignTokens.colors.border,
     borderRadius: DesignTokens.radius.md,
-    backgroundColor: '#F9F3EA',
+    backgroundColor: DesignTokens.colors.surface,
     padding: DesignTokens.spacing.md,
     gap: 6,
   },
@@ -811,9 +809,9 @@ const styles = StyleSheet.create({
   },
   loginLinkCard: {
     borderWidth: 1,
-    borderColor: '#CFBEA8',
+    borderColor: DesignTokens.colors.border,
     borderRadius: DesignTokens.radius.sm,
-    backgroundColor: '#F5EBDD',
+    backgroundColor: DesignTokens.colors.surfaceMuted,
     paddingHorizontal: DesignTokens.spacing.sm,
     paddingVertical: 8,
     alignSelf: 'flex-start',
@@ -833,9 +831,9 @@ const styles = StyleSheet.create({
   },
   trackCard: {
     borderWidth: 1,
-    borderColor: '#D8CABA',
+    borderColor: DesignTokens.colors.border,
     borderRadius: DesignTokens.radius.md,
-    backgroundColor: '#FAF4EA',
+    backgroundColor: DesignTokens.colors.surface,
     paddingHorizontal: DesignTokens.spacing.sm,
     paddingVertical: DesignTokens.spacing.sm,
     flexDirection: 'row',
@@ -863,9 +861,9 @@ const styles = StyleSheet.create({
   },
   reviewCard: {
     borderWidth: 1,
-    borderColor: '#D8CABA',
+    borderColor: DesignTokens.colors.border,
     borderRadius: DesignTokens.radius.md,
-    backgroundColor: '#FCF8F0',
+    backgroundColor: DesignTokens.colors.surface,
     padding: DesignTokens.spacing.md,
     gap: DesignTokens.spacing.sm,
   },
@@ -894,9 +892,9 @@ const styles = StyleSheet.create({
   },
   pinnedBadge: {
     borderWidth: 1,
-    borderColor: '#C7DBEB',
+    borderColor: DesignTokens.colors.accentBlueSurface,
     borderRadius: DesignTokens.radius.sm,
-    backgroundColor: '#E9F1F8',
+    backgroundColor: DesignTokens.colors.accentBlueSurface,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
@@ -926,9 +924,9 @@ const styles = StyleSheet.create({
   },
   openReviewLink: {
     borderWidth: 1,
-    borderColor: '#CFBEA8',
+    borderColor: DesignTokens.colors.border,
     borderRadius: DesignTokens.radius.sm,
-    backgroundColor: '#F5EBDD',
+    backgroundColor: DesignTokens.colors.surfaceMuted,
     paddingHorizontal: DesignTokens.spacing.sm,
     paddingVertical: 8,
     alignSelf: 'flex-start',

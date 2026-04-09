@@ -2,32 +2,17 @@ import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
 import { ScalePressable } from '@/components/ui/ScalePressable';
 import { DesignTokens } from '@/constants/design-system';
 import { searchCatalog } from '@/lib/api';
-import { getAlbumCoverPlaceholder, getArtistPortraitPlaceholder } from '@/lib/placeholders';
+import { getAlbumCoverUri, getArtistPortraitPlaceholder } from '@/lib/placeholders';
 import { formatRating } from '@/lib/rating';
-import { useResponsiveLayout } from '@/lib/responsive';
+import { getFluidGridItemStyle, useResponsiveLayout } from '@/lib/responsive';
 import type { SearchResponse, SearchType } from '@/lib/types';
 import { useReducedMotionPreference } from '@/lib/use-reduced-motion';
 import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 
 const SEARCH_TYPES: SearchType[] = ['all', 'artists', 'albums'];
-
-function getEntering(shouldReduceMotion: boolean, delay: number) {
-  if (shouldReduceMotion) {
-    return undefined;
-  }
-  return FadeInDown.duration(DesignTokens.motion.durationSlow).delay(delay);
-}
-
-function getListEntering(shouldReduceMotion: boolean, baseDelay: number, index: number) {
-  if (index >= 8) {
-    return undefined;
-  }
-  return getEntering(shouldReduceMotion, baseDelay + index * DesignTokens.motion.stagger);
-}
 
 export default function SearchScreen() {
   const { isDesktop, isTablet, contentMaxWidth, horizontalPadding } = useResponsiveLayout();
@@ -67,6 +52,15 @@ export default function SearchScreen() {
     : isTablet
       ? { width: 236, height: 342, mediaHeight: 190, bodyHeight: 152 }
       : { width: 220, height: 328, mediaHeight: 180, bodyHeight: 148 };
+  const fluidCardItemStyle = getFluidGridItemStyle({
+    isDesktop,
+    isTablet,
+    minWidth: 220,
+    maxWidth: 320,
+    nativeMobileWidth: '100%',
+    nativeTabletWidth: cardDimensions.width,
+    nativeDesktopWidth: cardDimensions.width,
+  });
 
   return (
     <ScrollView
@@ -75,7 +69,7 @@ export default function SearchScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
-        <Animated.View entering={getEntering(shouldReduceMotion, 0)} style={styles.masthead}>
+        <View>
           <Text style={styles.eyebrow}>Lookup</Text>
           <Text style={styles.title}>Search catalog</Text>
           <Text style={styles.subtitle}>Find artists and albums in one pass, then jump straight to detail pages.</Text>
@@ -116,24 +110,24 @@ export default function SearchScreen() {
               loading={loading}
             />
           </View>
-        </Animated.View>
+        </View>
 
         {error ? (
-          <Animated.View entering={getEntering(shouldReduceMotion, 70)} style={styles.errorBanner}>
+          <View>
             <Text style={styles.errorText}>{error}</Text>
-          </Animated.View>
+          </View>
         ) : null}
 
         {result ? (
           <>
-            <Animated.View entering={getEntering(shouldReduceMotion, 120)} style={styles.summaryCard}>
+            <View>
               <Text style={styles.summaryTitle}>Results</Text>
               <Text style={styles.summaryMeta}>
                 “{result.query}” in {result.type} • {result.artists.length} artists • {result.albums.length} albums
               </Text>
-            </Animated.View>
+            </View>
 
-            <Animated.View entering={getEntering(shouldReduceMotion, 170)} style={styles.section}>
+            <View>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Artists</Text>
                 <Text style={styles.sectionMeta}>{result.artists.length} matches</Text>
@@ -147,13 +141,13 @@ export default function SearchScreen() {
               ) : (
                 <View style={styles.resultGrid}>
                   {result.artists.map((artist, index) => (
-                    <Animated.View
+                    <View
                       key={artist.id}
-                      entering={getListEntering(shouldReduceMotion, 210, index)}
+                      style={fluidCardItemStyle}
                     >
                       <Link href={{ pathname: '/artist/[id]', params: { id: String(artist.id) } }} asChild>
                         <ScalePressable
-                          contentStyle={[styles.resultCard, { width: cardDimensions.width, height: cardDimensions.height }]}
+                          contentStyle={[styles.resultCard, { height: cardDimensions.height }]}
                         >
                           <Image
                             source={{ uri: getArtistPortraitPlaceholder(artist.id, artist.name) }}
@@ -174,13 +168,13 @@ export default function SearchScreen() {
                           </View>
                         </ScalePressable>
                       </Link>
-                    </Animated.View>
+                    </View>
                   ))}
                 </View>
               )}
-            </Animated.View>
+            </View>
 
-            <Animated.View entering={getEntering(shouldReduceMotion, 250)} style={styles.section}>
+            <View>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Albums</Text>
                 <Text style={styles.sectionMeta}>{result.albums.length} matches</Text>
@@ -194,16 +188,24 @@ export default function SearchScreen() {
               ) : (
                 <View style={styles.resultGrid}>
                   {result.albums.map((album, index) => (
-                    <Animated.View
+                    <View
                       key={album.id}
-                      entering={getListEntering(shouldReduceMotion, 290, index)}
+                      style={fluidCardItemStyle}
                     >
                       <Link href={{ pathname: '/album/[id]', params: { id: String(album.id) } }} asChild>
                         <ScalePressable
-                          contentStyle={[styles.resultCard, { width: cardDimensions.width, height: cardDimensions.height }]}
+                          contentStyle={[styles.resultCard, { height: cardDimensions.height }]}
                         >
                           <Image
-                            source={{ uri: getAlbumCoverPlaceholder(album.id, album.title, album.artist_name) }}
+                            source={{
+                              uri: getAlbumCoverUri({
+                                albumId: album.id,
+                                title: album.title,
+                                artist: album.artist_name,
+                                coverImageUrl: album.cover_image_url,
+                                coverImage: album.cover_image,
+                              }),
+                            }}
                             style={[styles.albumImage, { height: cardDimensions.mediaHeight }]}
                             contentFit="cover"
                             transition={shouldReduceMotion ? 0 : 170}
@@ -221,17 +223,17 @@ export default function SearchScreen() {
                           </View>
                         </ScalePressable>
                       </Link>
-                    </Animated.View>
+                    </View>
                   ))}
                 </View>
               )}
-            </Animated.View>
+            </View>
           </>
         ) : (
-          <Animated.View entering={getEntering(shouldReduceMotion, 110)} style={styles.emptyState}>
+          <View>
             <Text style={styles.emptyTitle}>Start with a search query</Text>
             <Text style={styles.emptyText}>Results will populate here after your first search.</Text>
-          </Animated.View>
+          </View>
         )}
       </View>
     </ScrollView>

@@ -4,24 +4,14 @@ import { ScalePressable } from '@/components/ui/ScalePressable';
 import { DesignTokens } from '@/constants/design-system';
 import { getCharts } from '@/lib/api';
 import { formatRating } from '@/lib/rating';
-import { useResponsiveLayout } from '@/lib/responsive';
+import { getFluidGridItemStyle, useResponsiveLayout } from '@/lib/responsive';
 import type { ChartResponse } from '@/lib/types';
-import { useReducedMotionPreference } from '@/lib/use-reduced-motion';
 import { Link } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-
-function getEntering(shouldReduceMotion: boolean, delay: number) {
-  if (shouldReduceMotion) {
-    return undefined;
-  }
-  return FadeInDown.duration(DesignTokens.motion.durationSlow).delay(delay);
-}
 
 export default function ChartsScreen() {
   const { isDesktop, isTablet, contentMaxWidth, horizontalPadding } = useResponsiveLayout();
-  const shouldReduceMotion = useReducedMotionPreference();
 
   const [year, setYear] = useState('');
   const [genre, setGenre] = useState('');
@@ -34,19 +24,35 @@ export default function ChartsScreen() {
     () => year.trim() !== '' || genre.trim() !== '' || releaseType.trim() !== '',
     [year, genre, releaseType]
   );
-  const cardWidth = isDesktop ? '49%' : isTablet ? '48.5%' : '100%';
+  const fluidCardItemStyle = getFluidGridItemStyle({
+    isDesktop,
+    isTablet,
+    minWidth: 220,
+    maxWidth: 320,
+    nativeDesktopWidth: '49%',
+    nativeTabletWidth: '48.5%',
+    nativeMobileWidth: '100%',
+  });
 
   const loadCharts = useCallback(async () => {
     if (loading) {
       return;
     }
 
+    const trimmedYear = year.trim();
+    if (trimmedYear !== '' && !/^\d+$/.test(trimmedYear)) {
+      setError('Year must be a positive integer.');
+      return;
+    }
+
+    const parsedYear = trimmedYear === '' ? undefined : Number(trimmedYear);
+
     setLoading(true);
     setError(null);
 
     try {
       const payload = await getCharts({
-        year: year.trim() === '' ? undefined : Number(year),
+        year: parsedYear,
         genre: genre.trim() === '' ? undefined : genre.trim(),
         release_type: releaseType.trim() === '' ? undefined : releaseType.trim(),
         min_ratings: 1,
@@ -95,7 +101,7 @@ export default function ChartsScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
-        <Animated.View entering={getEntering(shouldReduceMotion, 0)} style={styles.topBar}>
+        <View>
           <BackNavButton />
           {Platform.OS === 'web' ? (
             <LiquidGlassButton
@@ -106,17 +112,17 @@ export default function ChartsScreen() {
               loading={loading}
             />
           ) : null}
-        </Animated.View>
+        </View>
 
-        <Animated.View entering={getEntering(shouldReduceMotion, 40)} style={styles.heroCard}>
+        <View>
           <Text style={styles.heroEyebrow}>Charts</Text>
           <Text style={styles.heroTitle}>Find top-rated releases</Text>
           <Text style={styles.heroSubtitle}>
             Filter by year, genre, and release type to surface the records the community rates highest.
           </Text>
-        </Animated.View>
+        </View>
 
-        <Animated.View entering={getEntering(shouldReduceMotion, 80)} style={styles.section}>
+        <View>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Filters</Text>
             <Text style={styles.sectionMeta}>Use one field or combine all three.</Text>
@@ -179,30 +185,30 @@ export default function ChartsScreen() {
               ) : null}
             </View>
           </View>
-        </Animated.View>
+        </View>
 
         {error ? (
-          <Animated.View entering={getEntering(shouldReduceMotion, 120)} style={styles.errorBanner}>
+          <View>
             <Text style={styles.errorText}>{error}</Text>
-          </Animated.View>
+          </View>
         ) : null}
 
         {loading ? (
-          <Animated.View entering={getEntering(shouldReduceMotion, 150)} style={styles.loadingState}>
+          <View>
             <Text style={styles.loadingTitle}>Loading chart data</Text>
             <Text style={styles.loadingText}>Crunching rankings with your selected filters.</Text>
-          </Animated.View>
+          </View>
         ) : null}
 
         {!loading && !result ? (
-          <Animated.View entering={getEntering(shouldReduceMotion, 180)} style={styles.emptyState}>
+          <View>
             <Text style={styles.emptyTitle}>No query run yet</Text>
             <Text style={styles.emptyText}>Set optional filters above, then load charts to see ranked albums.</Text>
-          </Animated.View>
+          </View>
         ) : null}
 
         {result ? (
-          <Animated.View entering={getEntering(shouldReduceMotion, 200)} style={styles.section}>
+          <View>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Results</Text>
               <Text style={styles.sectionMeta}>
@@ -218,10 +224,9 @@ export default function ChartsScreen() {
             ) : (
               <View style={styles.grid}>
                 {result.items.map((item, index) => (
-                  <Animated.View
+                  <View
                     key={item.id}
-                    entering={getEntering(shouldReduceMotion, 240 + Math.min(index, 10) * DesignTokens.motion.stagger)}
-                    style={{ width: cardWidth }}
+                    style={fluidCardItemStyle}
                   >
                     <View style={styles.chartCard}>
                       <View style={styles.chartHeader}>
@@ -261,11 +266,11 @@ export default function ChartsScreen() {
                         </ScalePressable>
                       </Link>
                     </View>
-                  </Animated.View>
+                  </View>
                 ))}
               </View>
             )}
-          </Animated.View>
+          </View>
         ) : null}
       </View>
     </ScrollView>

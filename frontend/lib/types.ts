@@ -74,6 +74,8 @@ export type Album = {
     release_year: number;
     release_type: string;
     collaborators: string | null;
+    cover_image: string | null;
+    cover_image_url: string | null;
     average_rating: number | null;
     ratings_count: number;
     reviews_count: number;
@@ -109,6 +111,8 @@ export type Review = {
     release_type: string;
     artist_id: number;
     artist_name: string;
+    cover_image: string | null;
+    cover_image_url: string | null;
     user_id: number;
     author: string;
     title: string;

@@ -3,15 +3,14 @@ import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
 import { ScalePressable } from '@/components/ui/ScalePressable';
 import { DesignTokens } from '@/constants/design-system';
 import { getArtist, getArtistAlbums, getArtistTopTracks } from '@/lib/api';
-import { getAlbumCoverPlaceholder, getArtistPortraitPlaceholder } from '@/lib/placeholders';
-import { useResponsiveLayout } from '@/lib/responsive';
+import { getAlbumCoverUri, getArtistPortraitPlaceholder } from '@/lib/placeholders';
+import { getFluidGridItemStyle, useResponsiveLayout } from '@/lib/responsive';
 import type { Album, ArtistDetail, ArtistTopTrack } from '@/lib/types';
 import { useReducedMotionPreference } from '@/lib/use-reduced-motion';
 import { Image } from 'expo-image';
 import { Link, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Platform, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 
 function parseId(input: string | string[] | undefined): number | null {
   if (!input) {
@@ -26,20 +25,6 @@ function parseId(input: string | string[] | undefined): number | null {
   }
 
   return parsed;
-}
-
-function getEntering(shouldReduceMotion: boolean, delay: number) {
-  if (shouldReduceMotion) {
-    return undefined;
-  }
-  return FadeInDown.duration(DesignTokens.motion.durationSlow).delay(delay);
-}
-
-function getListEntering(shouldReduceMotion: boolean, baseDelay: number, index: number) {
-  if (index >= 8) {
-    return undefined;
-  }
-  return getEntering(shouldReduceMotion, baseDelay + index * DesignTokens.motion.stagger);
 }
 
 function prettifyLabel(value: string): string {
@@ -73,8 +58,16 @@ export default function ArtistDetailScreen() {
       }));
   }, [artist]);
 
-  const albumCardWidth = isDesktop ? '49%' : isTablet ? '48.5%' : '100%';
-  const trackCardWidth = isDesktop ? '49%' : isTablet ? '48.5%' : '100%';
+  const fluidTwoColumnItemStyle = getFluidGridItemStyle({
+    isDesktop,
+    isTablet,
+    minWidth: 220,
+    maxWidth: 320,
+    nativeDesktopWidth: '49%',
+    nativeTabletWidth: '48.5%',
+    nativeMobileWidth: '100%',
+  });
+  const webFluidTwoColumnItemStyle = Platform.OS === 'web' ? fluidTwoColumnItemStyle : undefined;
 
   const loadData = useCallback(async () => {
     if (!artistId) {
@@ -117,29 +110,29 @@ export default function ArtistDetailScreen() {
       refreshControl={mobileRefreshControl}
     >
       <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
-        <Animated.View entering={getEntering(shouldReduceMotion, 0)} style={styles.topBar}>
+        <View>
           <BackNavButton fallbackHref="/artists" label="Back to artists" />
           {Platform.OS === 'web' ? (
             <LiquidGlassButton label="Refresh" variant="secondary" size="sm" onPress={loadData} />
           ) : null}
-        </Animated.View>
+        </View>
 
         {error ? (
-          <Animated.View entering={getEntering(shouldReduceMotion, 40)} style={styles.errorBanner}>
+          <View>
             <Text style={styles.errorText}>{error}</Text>
-          </Animated.View>
+          </View>
         ) : null}
 
         {loading ? (
-          <Animated.View entering={getEntering(shouldReduceMotion, 80)} style={styles.loadingState}>
+          <View>
             <Text style={styles.loadingTitle}>Loading artist profile</Text>
             <Text style={styles.loadingText}>Gathering albums, context, and top tracks.</Text>
-          </Animated.View>
+          </View>
         ) : null}
 
         {!loading && artist ? (
           <>
-            <Animated.View entering={getEntering(shouldReduceMotion, 120)} style={styles.section}>
+            <View>
               <View style={[styles.heroCard, isDesktop ? styles.heroDesktop : styles.heroMobile]}>
                 <Image
                   source={{ uri: getArtistPortraitPlaceholder(artist.id, artist.name) }}
@@ -188,9 +181,9 @@ export default function ArtistDetailScreen() {
                   ) : null}
                 </View>
               </View>
-            </Animated.View>
+            </View>
 
-            <Animated.View entering={getEntering(shouldReduceMotion, 180)} style={styles.section}>
+            <View>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Discography summary</Text>
                 <Text style={styles.sectionMeta}>Snapshot from catalog metadata</Text>
@@ -204,21 +197,21 @@ export default function ArtistDetailScreen() {
               ) : (
                 <View style={styles.summaryGrid}>
                   {summaryEntries.map((entry, index) => (
-                    <Animated.View
+                    <View
                       key={entry.label}
-                      entering={getListEntering(shouldReduceMotion, 220, index)}
+                      style={webFluidTwoColumnItemStyle}
                     >
                       <View style={styles.summaryCard}>
                         <Text style={styles.summaryLabel}>{entry.label}</Text>
                         <Text style={styles.summaryValue}>{entry.value}</Text>
                       </View>
-                    </Animated.View>
+                    </View>
                   ))}
                 </View>
               )}
-            </Animated.View>
+            </View>
 
-            <Animated.View entering={getEntering(shouldReduceMotion, 240)} style={styles.section}>
+            <View>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Albums</Text>
                 <Text style={styles.sectionMeta}>{albums.length} releases</Text>
@@ -232,14 +225,22 @@ export default function ArtistDetailScreen() {
               ) : (
                 <View style={styles.albumGrid}>
                   {albums.map((album, index) => (
-                    <Animated.View
+                    <View
                       key={album.id}
-                      entering={getListEntering(shouldReduceMotion, 280, index)}
+                      style={fluidTwoColumnItemStyle}
                     >
                       <Link href={{ pathname: '/album/[id]', params: { id: String(album.id) } }} asChild>
-                        <ScalePressable contentStyle={[styles.albumCard, { width: albumCardWidth }]}>
+                        <ScalePressable contentStyle={styles.albumCard}>
                           <Image
-                            source={{ uri: getAlbumCoverPlaceholder(album.id, album.title, album.artist_name) }}
+                            source={{
+                              uri: getAlbumCoverUri({
+                                albumId: album.id,
+                                title: album.title,
+                                artist: album.artist_name,
+                                coverImageUrl: album.cover_image_url,
+                                coverImage: album.cover_image,
+                              }),
+                            }}
                             style={styles.albumImage}
                             contentFit="cover"
                             transition={shouldReduceMotion ? 0 : 180}
@@ -255,13 +256,13 @@ export default function ArtistDetailScreen() {
                           </View>
                         </ScalePressable>
                       </Link>
-                    </Animated.View>
+                    </View>
                   ))}
                 </View>
               )}
-            </Animated.View>
+            </View>
 
-            <Animated.View entering={getEntering(shouldReduceMotion, 320)} style={styles.section}>
+            <View>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Top tracks</Text>
                 <Text style={styles.sectionMeta}>{topTracks.length} highlights</Text>
@@ -275,12 +276,12 @@ export default function ArtistDetailScreen() {
               ) : (
                 <View style={styles.trackGrid}>
                   {topTracks.map((track, index) => (
-                    <Animated.View
+                    <View
                       key={track.id}
-                      entering={getListEntering(shouldReduceMotion, 360, index)}
+                      style={fluidTwoColumnItemStyle}
                     >
                       <Link href={{ pathname: '/album/[id]', params: { id: String(track.album_id) } }} asChild>
-                        <ScalePressable contentStyle={[styles.trackCard, { width: trackCardWidth }]}>
+                        <ScalePressable contentStyle={styles.trackCard}>
                           <Text style={styles.trackTitle}>{track.title}</Text>
                           <Text style={styles.trackMeta}>
                             {track.album_title} • {track.release_year}
@@ -291,13 +292,13 @@ export default function ArtistDetailScreen() {
                           </Text>
                         </ScalePressable>
                       </Link>
-                    </Animated.View>
+                    </View>
                   ))}
                 </View>
               )}
-            </Animated.View>
+            </View>
 
-            <Animated.View entering={getEntering(shouldReduceMotion, 400)} style={styles.section}>
+            <View>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Related artists</Text>
                 <Text style={styles.sectionMeta}>{artist.related_artists.length} connections</Text>
@@ -311,9 +312,9 @@ export default function ArtistDetailScreen() {
               ) : (
                 <View style={styles.relatedGrid}>
                   {artist.related_artists.map((related, index) => (
-                    <Animated.View
+                    <View
                       key={related.id}
-                      entering={getListEntering(shouldReduceMotion, 440, index)}
+                      style={webFluidTwoColumnItemStyle}
                     >
                       <Link href={{ pathname: '/artist/[id]', params: { id: String(related.id) } }} asChild>
                         <ScalePressable contentStyle={styles.relatedCard}>
@@ -323,11 +324,11 @@ export default function ArtistDetailScreen() {
                           <Text style={styles.relatedMeta}>{related.followers.toLocaleString()} followers</Text>
                         </ScalePressable>
                       </Link>
-                    </Animated.View>
+                    </View>
                   ))}
                 </View>
               )}
-            </Animated.View>
+            </View>
           </>
         ) : null}
       </View>

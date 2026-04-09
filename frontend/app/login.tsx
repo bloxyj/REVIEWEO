@@ -11,14 +11,6 @@ import { Image } from 'expo-image';
 import { Link, useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-
-function getEntering(shouldReduceMotion: boolean, delay: number) {
-  if (shouldReduceMotion) {
-    return undefined;
-  }
-  return FadeInDown.duration(DesignTokens.motion.durationSlow).delay(delay);
-}
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -63,7 +55,7 @@ export default function LoginScreen() {
     >
       <View style={[styles.content, { maxWidth: layoutMaxWidth }]}>
         <View style={[styles.layout, isDesktop ? styles.layoutDesktop : styles.layoutMobile]}>
-          <Animated.View entering={getEntering(shouldReduceMotion, 0)} style={styles.editorialCard}>
+          <View>
             <Image
               source={{ uri: heroImage }}
               style={styles.heroImage}
@@ -75,9 +67,9 @@ export default function LoginScreen() {
             <Text style={styles.editorialText}>
               Sign in to keep rating albums, revisit your notes, and follow the reviews shaping this week’s charts.
             </Text>
-          </Animated.View>
+          </View>
 
-          <Animated.View entering={getEntering(shouldReduceMotion, 70)} style={styles.formCard}>
+          <View>
             <BackNavButton fallbackHref="/" label="Back" />
 
             <View style={styles.formHeader}>
@@ -146,7 +138,7 @@ export default function LoginScreen() {
                 <Text style={styles.switchLinkText}>Need an account? Register</Text>
               </ScalePressable>
             </Link>
-          </Animated.View>
+          </View>
         </View>
       </View>
     </ScrollView>

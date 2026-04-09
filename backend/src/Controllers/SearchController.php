@@ -48,6 +48,7 @@ final class SearchController extends ApiController
 
 			if ($type === 'all' || $type === 'albums') {
 				$albums = $this->searchModel->searchAlbums($query, (int) $limit);
+				$albums = $this->withAlbumCoverUrls($albums);
 			}
 
 			return $this->success([
