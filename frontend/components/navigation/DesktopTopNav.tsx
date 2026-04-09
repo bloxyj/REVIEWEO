@@ -3,21 +3,38 @@ import { DesignTokens } from '@/constants/design-system';
 import { useAuth } from '@/context/auth-context';
 import { getFilteredNavLinks, isActivePath, type NavLink } from '@/lib/nav-links';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 
 type DesktopTopNavProps = {
   pathname: string;
+  isTouchDevice?: boolean;
 };
 
-export function DesktopTopNav({ pathname }: DesktopTopNavProps) {
+export function DesktopTopNav({ pathname, isTouchDevice = false }: DesktopTopNavProps) {
   const { session, clearSession, isAdmin } = useAuth();
   const router = useRouter();
+  const { width } = useWindowDimensions();
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredLinks: NavLink[] = getFilteredNavLinks(!!isAdmin);
+  const filteredLinks: NavLink[] = useMemo(() => getFilteredNavLinks(!!isAdmin), [isAdmin]);
+  const isCompact = width < (isTouchDevice ? 980 : 1160);
+  const isVeryNarrow = width < 780;
+
+  const submitSearch = () => {
+    const trimmed = searchQuery.trim();
+
+    if (trimmed === '') {
+      router.push('/search');
+      return;
+    }
+
+    router.push({ pathname: '/search', params: { q: trimmed, type: 'all' } });
+  };
 
   return (
     <View style={styles.wrapper}>
-      <View style={styles.inner}>
+      <View style={[styles.inner, isCompact ? styles.innerCompact : null]}>
         <Pressable
           style={styles.brandLink}
           onPress={() => router.push('/')}
@@ -30,7 +47,7 @@ export function DesktopTopNav({ pathname }: DesktopTopNavProps) {
           </View>
         </Pressable>
 
-        <View style={styles.linksArea}>
+        <View style={[styles.linksArea, isVeryNarrow ? styles.linksAreaFullWidth : null]}>
           {filteredLinks.map((item) => {
             const active = isActivePath(pathname, item.matchPatterns);
 
@@ -50,7 +67,21 @@ export function DesktopTopNav({ pathname }: DesktopTopNavProps) {
           })}
         </View>
 
-        <View style={styles.authArea}>
+        <View style={[styles.searchArea, isVeryNarrow ? styles.searchAreaFullWidth : null]}>
+          <TextInput
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Search songs, artists, albums"
+            placeholderTextColor={DesignTokens.colors.textMuted}
+            autoCorrect={false}
+            returnKeyType="search"
+            accessibilityLabel="Search catalog"
+            onSubmitEditing={submitSearch}
+            style={styles.searchInput}
+          />
+        </View>
+
+        <View style={[styles.authArea, isVeryNarrow ? styles.authAreaFullWidth : null]}>
           {session ? (
             <>
               <Text numberOfLines={1} style={styles.userText}>
@@ -90,16 +121,20 @@ const styles = StyleSheet.create({
     borderBottomColor: DesignTokens.colors.border,
     backgroundColor: DesignTokens.colors.surface,
     paddingHorizontal: DesignTokens.spacing.lg,
-    paddingVertical: DesignTokens.spacing.md,
+    paddingVertical: DesignTokens.spacing.sm,
   },
   inner: {
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: DesignTokens.spacing.lg,
+    flexWrap: 'wrap',
+    gap: DesignTokens.spacing.sm,
+  },
+  innerCompact: {
+    gap: DesignTokens.spacing.xs,
   },
   brandLink: {
-    minWidth: 190,
+    minWidth: 172,
     minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
@@ -125,7 +160,14 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     alignItems: 'center',
     gap: DesignTokens.spacing.xs,
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
+    minWidth: 220,
+  },
+  linksAreaFullWidth: {
+    width: '100%',
+    minWidth: 0,
+    flexGrow: 0,
   },
   linkChip: {
     borderWidth: 1,
@@ -149,12 +191,42 @@ const styles = StyleSheet.create({
   activeLinkText: {
     color: DesignTokens.colors.textPrimary,
   },
+  searchArea: {
+    minWidth: 250,
+    maxWidth: 520,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: DesignTokens.spacing.xs,
+    flexGrow: 1,
+    flexShrink: 1,
+  },
+  searchAreaFullWidth: {
+    width: '100%',
+    minWidth: 0,
+    maxWidth: '100%',
+  },
+  searchInput: {
+    flex: 1,
+    minHeight: 44,
+    borderWidth: 1,
+    borderColor: DesignTokens.colors.border,
+    borderRadius: DesignTokens.radius.md,
+    backgroundColor: DesignTokens.colors.surfaceMuted,
+    color: DesignTokens.colors.textPrimary,
+    fontSize: DesignTokens.typography.bodySmall,
+    paddingHorizontal: DesignTokens.spacing.sm,
+  },
   authArea: {
-    minWidth: 220,
+    minWidth: 180,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
     gap: DesignTokens.spacing.xs,
+  },
+  authAreaFullWidth: {
+    width: '100%',
+    minWidth: 0,
+    justifyContent: 'flex-start',
   },
   userText: {
     maxWidth: 120,

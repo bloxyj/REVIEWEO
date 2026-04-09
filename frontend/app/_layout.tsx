@@ -5,7 +5,7 @@ import { DesktopTopNav } from '@/components/navigation/DesktopTopNav';
 import { DesignTokens } from '@/constants/design-system';
 import { Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -20,6 +20,7 @@ export default function RootLayout() {
   const pathname = usePathname();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const [isTouchWebDevice, setIsTouchWebDevice] = useState(false);
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -36,9 +37,35 @@ export default function RootLayout() {
       })
   );
 
-  const isDesktop = Platform.OS === 'web' && width >= 1024;
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia?.('(pointer: coarse)');
+
+    const evaluateTouchCapabilities = () => {
+      const hasTouchPoints = typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0;
+      const hasCoarsePointer = mediaQuery ? mediaQuery.matches : false;
+      const isMobileUA =
+        typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
+      setIsTouchWebDevice(Boolean(hasTouchPoints || hasCoarsePointer || isMobileUA));
+    };
+
+    evaluateTouchCapabilities();
+    mediaQuery?.addEventListener?.('change', evaluateTouchCapabilities);
+
+    return () => {
+      mediaQuery?.removeEventListener?.('change', evaluateTouchCapabilities);
+    };
+  }, []);
+
+  const isWeb = Platform.OS === 'web';
+  const isDesktopWeb = isWeb && !isTouchWebDevice && width >= 1024;
+  const shouldShowWebTopNav = isWeb;
   const tabContentStyle = styles.stackContent;
-  const nonTabContentStyle = !isDesktop
+  const nonTabContentStyle = !isDesktopWeb
     ? [
         styles.stackContent,
         {
@@ -52,7 +79,7 @@ export default function RootLayout() {
     <AuthProvider>
       <QueryClientProvider client={queryClient}>
         <View style={styles.shell}>
-          {isDesktop ? <DesktopTopNav pathname={pathname} /> : null}
+          {shouldShowWebTopNav ? <DesktopTopNav pathname={pathname} isTouchDevice={isTouchWebDevice} /> : null}
 
           <View style={styles.stackArea}>
             <Stack

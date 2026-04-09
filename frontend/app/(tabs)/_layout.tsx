@@ -17,27 +17,11 @@ export default function TabsLayout() {
         />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="artists">
-        <Label>Artists</Label>
-        <Icon
-          sf={{ default: 'person.2', selected: 'person.2.fill' }}
-          androidSrc={<VectorIcon family={MaterialIcons} name="people" />}
-        />
-      </NativeTabs.Trigger>
-
       <NativeTabs.Trigger name="albums">
         <Label>Albums</Label>
         <Icon
           sf={{ default: 'rectangle.stack', selected: 'rectangle.stack.fill' }}
           androidSrc={<VectorIcon family={MaterialIcons} name="album" />}
-        />
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="settings">
-        <Label>Settings</Label>
-        <Icon
-          sf={{ default: 'gear', selected: 'gear' }}
-          androidSrc={<VectorIcon family={MaterialIcons} name="settings" />}
         />
       </NativeTabs.Trigger>
 

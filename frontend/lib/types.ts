@@ -131,13 +131,28 @@ export type ReviewInput = {
     content?: string;
 };
 
-export type SearchType = 'all' | 'artists' | 'albums';
+export type SearchTrack = {
+    id: number;
+    title: string;
+    track_order: number;
+    popularity_score: number | null;
+    listeners_k: number | null;
+    has_lyrics: 0 | 1;
+    album_id: number;
+    album_title: string;
+    release_year: number;
+    artist_id: number;
+    artist_name: string;
+};
+
+export type SearchType = 'all' | 'artists' | 'albums' | 'tracks';
 
 export type SearchResponse = {
     query: string;
     type: SearchType;
     artists: Artist[];
     albums: Album[];
+    tracks: SearchTrack[];
 };
 
 export type ChartItem = {
