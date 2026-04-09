@@ -36,80 +36,99 @@ function formatRole(role: AuthUser['role']): string {
 }
 
 export default function AdminScreen() {
-  const { session, isAdmin } = useAuth();
-  const { isDesktop, isTablet, contentMaxWidth, horizontalPadding } = useResponsiveLayout();
+    const { session, isAdmin } = useAuth();
 
-  const [users, setUsers] = useState<AuthUser[]>([]);
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+    const [users, setUsers] = useState<AuthUser[]>([]);
+    const [reviews, setReviews] = useState<Review[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-  const loadData = useCallback(async () => {
-    if (!session || !isAdmin) {
-      setLoading(false);
-      return;
-    }
+    const loadData = useCallback(async () => {
+        if (!session || !isAdmin) {
+            setLoading(false);
+            return;
+        }
 
-    setLoading(true);
-    setError(null);
+        setLoading(true);
+        setError(null);
 
-    try {
-      const [usersPayload, reviewsPayload] = await Promise.all([listAdminUsers(session.token), listReviews({ limit: 100 })]);
-      setUsers(usersPayload);
-      setReviews(reviewsPayload);
-    } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : 'Could not load admin data.');
-    } finally {
-      setLoading(false);
-    }
-  }, [session, isAdmin]);
+        try {
+            const [usersPayload, reviewsPayload] = await Promise.all([
+                listAdminUsers(session.token),
+                listReviews({ limit: 100 }),
+            ]);
+            setUsers(usersPayload);
+            setReviews(reviewsPayload);
+        } catch (loadError) {
+            setError(loadError instanceof Error ? loadError.message : 'Could not load admin data.');
+        } finally {
+            setLoading(false);
+        }
+    }, [session, isAdmin]);
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
 
-  const adminCount = useMemo(() => users.filter((user) => user.role === 'admin').length, [users]);
-  const pinnedCount = useMemo(() => reviews.filter((review) => review.is_pinned === 1).length, [reviews]);
-  const fluidCardItemStyle = getFluidGridItemStyle({
-    isDesktop,
-    isTablet,
-    minWidth: 220,
-    maxWidth: 320,
-    nativeDesktopWidth: '49%',
-    nativeTabletWidth: '48.5%',
-    nativeMobileWidth: '100%',
-  });
+    const onUpdateRole = async (user: AuthUser) => {
+        const roles: ("user" | "critique" | "admin")[] = ["user", "critique", "admin"];
+        const currentIndex = roles.indexOf(user.role as any);
+        const nextRole = roles[(currentIndex + 1) % roles.length];
 
-  const onUpdateRole = async (user: AuthUser) => {
-    if (!session) {
-      return;
-    }
+        try {
+            await adminUpdateUserRole(session!.token, user.id, nextRole);
+            await loadData();
+        } catch {
+            setError('Failed to update user role.');
+        }
+    };
 
-    const roles: AuthUser['role'][] = ['user', 'critique', 'admin'];
-    const currentIndex = roles.indexOf(user.role);
-    const nextRole = roles[(currentIndex + 1) % roles.length];
+    const onDeleteUser = async (user: AuthUser) => {
+    if (!session) return;
 
-    try {
-      await adminUpdateUserRole(session.token, user.id, nextRole);
-      await loadData();
-    } catch (updateError) {
-      setError(updateError instanceof Error ? updateError.message : 'Failed to update user role.');
-    }
-  };
-
-  const onDeleteUser = async (user: AuthUser) => {
-    if (!session) {
-      return;
+    if (Platform.OS === 'web') {
+        const confirmed = window.confirm(`Delete ${user.username}?`);
+        if (!confirmed) return;
+        try {
+        await adminDeleteUser(session.token, user.id);
+        await loadData();
+        } catch (deleteError) {
+        setError(deleteError instanceof Error ? deleteError.message : 'Failed to delete user.');
+        }
+        return;
     }
 
     Alert.alert('Delete account', `Delete ${user.username}?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
+        { text: 'Cancel', style: 'cancel' },
+        {
         text: 'Delete',
         style: 'destructive',
         onPress: async () => {
-          try {
+            try {
             await adminDeleteUser(session.token, user.id);
+            await loadData();
+            } catch (deleteError) {
+            setError(deleteError instanceof Error ? deleteError.message : 'Failed to delete user.');
+            }
+        },
+        },
+    ]);
+    };
+
+    const onTogglePin = async (review: Review) => {
+        if (!session || !isAdmin) return;
+        try {
+            await adminPinReview(session.token, review.id, review.is_pinned !== 1);
+            await loadData();
+        } catch {
+            setError('Pin action failed.');
+        }
+    };
+
+    const onDeleteReview = async (reviewId: number) => {
+        if (!session || !isAdmin) return;
+        try {
+            await adminDeleteReview(session.token, reviewId);
             await loadData();
           } catch (deleteError) {
             setError(deleteError instanceof Error ? deleteError.message : 'Failed to delete user.');
