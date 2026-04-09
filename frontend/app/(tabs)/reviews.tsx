@@ -83,7 +83,6 @@ export default function ReviewsScreen() {
             <View style={styles.headerCopy}>
               <Text style={styles.eyebrow}>Community</Text>
               <Text style={styles.title}>Reviews</Text>
-              <Text style={styles.subtitle}>Read quick takes, open full notes, and keep likes in sync with your account.</Text>
             </View>
             {Platform.OS === 'web' ? (
               <AppButton label="Refresh" variant="secondary" size="sm" onPress={loadReviews} />
@@ -268,13 +267,14 @@ const styles = StyleSheet.create({
     borderRadius: DesignTokens.radius.sm,
     backgroundColor: DesignTokens.colors.surface,
     paddingHorizontal: DesignTokens.spacing.sm,
-    paddingVertical: 8,
+    paddingVertical: 6,
     alignSelf: 'flex-start',
   },
   authLinkText: {
     color: DesignTokens.colors.textPrimary,
     fontSize: DesignTokens.typography.meta,
     fontWeight: '600',
+    paddingVertical: 6,
   },
   errorBanner: {
     borderWidth: 1,
