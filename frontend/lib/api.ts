@@ -6,8 +6,6 @@ import type {
     ApiListParams,
     Artist,
     ArtistDetail,
-    ArtistGenre,
-    ArtistRelated,
     ArtistTopTrack,
     AuthPayload,
     AuthUser,
@@ -114,8 +112,6 @@ export function getArtist(id: number): Promise<ArtistDetail> { return request<Ar
 export function getArtistAlbums(id: number, params?: ApiListParams): Promise<Album[]> {
     return request<Album[]>(`/artists/${id}/albums${toQuery(params)}`);
 }
-export function getArtistGenres(id: number): Promise<ArtistGenre[]> { return request<ArtistGenre[]>(`/artists/${id}/genres`); }
-export function getArtistRelated(id: number): Promise<ArtistRelated[]> { return request<ArtistRelated[]>(`/artists/${id}/related`); }
 export function getArtistTopTracks(id: number, limit?: number): Promise<ArtistTopTrack[]> {
     return request<ArtistTopTrack[]>(`/artists/${id}/top-tracks${toQuery({ limit })}`);
 }
@@ -136,9 +132,6 @@ export function listReviews(params?: ApiListParams, options: SignalOptions = {})
 export function getReview(id: number): Promise<Review> { return request<Review>(`/reviews/${id}`); }
 export function getAlbumReviews(id: number, limit?: number, options: SignalOptions = {}): Promise<Review[]> {
     return request<Review[]>(`/albums/${id}/reviews${toQuery({ limit })}`, { signal: options.signal });
-}
-export function createReview(token: string, input: ReviewInput): Promise<Review> {
-    return request<Review>('/reviews', { method: 'POST', token, body: input });
 }
 export function createAlbumReview(token: string, albumId: number, input: Omit<ReviewInput, 'album_id'>): Promise<Review> {
     return request<Review>(`/albums/${albumId}/reviews`, { method: 'POST', token, body: input });

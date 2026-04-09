@@ -1,4 +1,4 @@
-import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
+import { AppButton } from '@/components/ui/AppButton';
 import { ScalePressable } from '@/components/ui/ScalePressable';
 import { DesignTokens } from '@/constants/design-system';
 import { useAuth } from '@/context/auth-context';
@@ -86,7 +86,7 @@ export default function ReviewsScreen() {
               <Text style={styles.subtitle}>Read quick takes, open full notes, and keep likes in sync with your account.</Text>
             </View>
             {Platform.OS === 'web' ? (
-              <LiquidGlassButton label="Refresh" variant="secondary" size="sm" onPress={loadReviews} />
+              <AppButton label="Refresh" variant="secondary" size="sm" onPress={loadReviews} />
             ) : null}
           </View>
 
@@ -177,7 +177,7 @@ export default function ReviewsScreen() {
                           <Text style={styles.linkText}>Open review</Text>
                         </ScalePressable>
                       </Link>
-                      <LiquidGlassButton
+                      <AppButton
                         label={`Like (${review.likes_count})`}
                         variant="secondary"
                         size="sm"

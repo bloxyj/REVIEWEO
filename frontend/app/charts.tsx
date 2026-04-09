@@ -1,5 +1,5 @@
 import { BackNavButton } from '@/components/navigation/BackNavButton';
-import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
+import { AppButton } from '@/components/ui/AppButton';
 import { ScalePressable } from '@/components/ui/ScalePressable';
 import { DesignTokens } from '@/constants/design-system';
 import { getCharts } from '@/lib/api';
@@ -104,7 +104,7 @@ export default function ChartsScreen() {
         <View>
           <BackNavButton />
           {Platform.OS === 'web' ? (
-            <LiquidGlassButton
+            <AppButton
               label={loading ? 'Loading…' : 'Run query'}
               variant="secondary"
               size="sm"
@@ -173,7 +173,7 @@ export default function ChartsScreen() {
             </View>
 
             <View style={styles.formActions}>
-              <LiquidGlassButton
+              <AppButton
                 label={loading ? 'Loading…' : 'Load charts'}
                 variant="primary"
                 size="sm"
@@ -181,7 +181,7 @@ export default function ChartsScreen() {
                 loading={loading}
               />
               {hasFilters || result ? (
-                <LiquidGlassButton label="Reset filters" variant="secondary" size="sm" onPress={resetFilters} />
+                <AppButton label="Reset filters" variant="secondary" size="sm" onPress={resetFilters} />
               ) : null}
             </View>
           </View>

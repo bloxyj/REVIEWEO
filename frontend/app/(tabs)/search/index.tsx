@@ -129,23 +129,23 @@ export default function SearchScreen() {
         options={
           isIOS
             ? {
-                title: 'Search',
-                headerShadowVisible: false,
-                headerSearchBarOptions: {
-                  placeholder: 'Search songs, artists, albums',
-                  hideWhenScrolling: false,
-                  onChangeText: onNativeSearchChange,
-                  onSearchButtonPress: onNativeSearchSubmit,
-                  onCancelButtonPress: () => {
-                    setQuery('');
-                    setResult(null);
-                    setError(null);
-                  },
+              title: 'Search',
+              headerShadowVisible: false,
+              headerSearchBarOptions: {
+                placeholder: 'Search songs, artists, albums',
+                hideWhenScrolling: false,
+                onChangeText: onNativeSearchChange,
+                onSearchButtonPress: onNativeSearchSubmit,
+                onCancelButtonPress: () => {
+                  setQuery('');
+                  setResult(null);
+                  setError(null);
                 },
-              }
+              },
+            }
             : {
-                headerShown: false,
-              }
+              headerShown: false,
+            }
         }
       />
 
@@ -154,7 +154,7 @@ export default function SearchScreen() {
         contentContainerStyle={[styles.container, { paddingHorizontal: horizontalPadding }]}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={[styles.content, { maxWidth: contentMaxWidth }]}> 
+        <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
           <View>
             <Text style={styles.eyebrow}>Lookup</Text>
             <Text style={styles.title}>Search catalog</Text>
@@ -204,7 +204,7 @@ export default function SearchScreen() {
                               contentFit="cover"
                               transition={shouldReduceMotion ? 0 : 170}
                             />
-                            <View style={[styles.resultBody, { height: cardDimensions.bodyHeight }]}> 
+                            <View style={[styles.resultBody, { height: cardDimensions.bodyHeight }]}>
                               <Text numberOfLines={1} style={styles.resultTitle}>
                                 {artist.name}
                               </Text>
@@ -290,7 +290,7 @@ export default function SearchScreen() {
                               contentFit="cover"
                               transition={shouldReduceMotion ? 0 : 170}
                             />
-                            <View style={[styles.resultBody, { height: cardDimensions.bodyHeight }]}> 
+                            <View style={[styles.resultBody, { height: cardDimensions.bodyHeight }]}>
                               <Text numberOfLines={1} style={styles.resultTitle}>
                                 {album.title}
                               </Text>

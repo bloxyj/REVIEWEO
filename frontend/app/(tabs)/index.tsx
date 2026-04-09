@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
+import { AppButton } from '@/components/ui/AppButton';
 import { ScalePressable } from '@/components/ui/ScalePressable';
 import { DesignTokens } from '@/constants/design-system';
 import { useAuth } from '@/context/auth-context';
@@ -162,11 +162,6 @@ export default function HomeScreen() {
             <Text style={styles.brandMeta}>Music catalog and ratings</Text>
           </View>
 
-          <Text style={styles.mastheadTitle}>A quieter way to keep your music history.</Text>
-          <Text style={styles.mastheadSubtitle}>
-            Track records, rate what you revisit, and follow the albums the community keeps returning to.
-          </Text>
-
           <View style={styles.quickActionsRow}>
             <Link href="/charts" asChild>
               <ScalePressable containerStyle={fluidQuickActionItemStyle} contentStyle={styles.quickActionCard}>
@@ -189,29 +184,6 @@ export default function HomeScreen() {
               </ScalePressable>
             </Link>
           </View>
-
-          {session ? (
-            <View style={styles.sessionRow}>
-              <Text style={styles.sessionText}>Signed in as {session.user.username}</Text>
-              <LiquidGlassButton label="Logout" variant="nav" size="sm" onPress={clearSession} />
-            </View>
-          ) : (
-            <View style={styles.sessionRow}>
-              <Text style={styles.sessionText}>Sign in to write and manage your ratings.</Text>
-              <View style={styles.sessionActions}>
-                <Link href="/login" asChild>
-                  <ScalePressable contentStyle={styles.sessionLinkCard}>
-                    <Text style={styles.sessionLinkText}>Login</Text>
-                  </ScalePressable>
-                </Link>
-                <Link href="/register" asChild>
-                  <ScalePressable contentStyle={styles.sessionLinkCard}>
-                    <Text style={styles.sessionLinkText}>Register</Text>
-                  </ScalePressable>
-                </Link>
-              </View>
-            </View>
-          )}
         </View>
 
         {error ? (
@@ -476,6 +448,7 @@ const styles = StyleSheet.create({
     color: DesignTokens.colors.textMuted,
     fontSize: DesignTokens.typography.micro,
     fontWeight: '500',
+    paddingBottom: 4,
   },
   mastheadTitle: {
     color: DesignTokens.colors.textPrimary,

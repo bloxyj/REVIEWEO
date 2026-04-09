@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BackNavButton } from '@/components/navigation/BackNavButton';
-import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
+import { AppButton } from '@/components/ui/AppButton';
 import { ScalePressable } from '@/components/ui/ScalePressable';
 import { DesignTokens } from '@/constants/design-system';
 import { useAuth } from '@/context/auth-context';
@@ -292,7 +292,7 @@ export default function AlbumDetailScreen() {
         <View>
           <BackNavButton fallbackHref="/albums" label="Back to albums" />
           {Platform.OS === 'web' ? (
-            <LiquidGlassButton label="Refresh" variant="secondary" size="sm" onPress={() => albumQuery.refetch()} />
+            <AppButton label="Refresh" variant="secondary" size="sm" onPress={() => albumQuery.refetch()} />
           ) : null}
         </View>
 
@@ -418,7 +418,7 @@ export default function AlbumDetailScreen() {
                     </View>
 
                     <View style={styles.formActions}>
-                      <LiquidGlassButton
+                      <AppButton
                         label={submitting ? 'Saving...' : ownReview ? 'Update review' : 'Create review'}
                         variant="primary"
                         size="sm"
@@ -426,7 +426,7 @@ export default function AlbumDetailScreen() {
                         loading={submitting}
                       />
                       {ownReview ? (
-                        <LiquidGlassButton
+                        <AppButton
                           label="Delete review"
                           variant="destructive"
                           size="sm"
@@ -530,7 +530,7 @@ export default function AlbumDetailScreen() {
                                 <Text style={styles.openReviewText}>Open review</Text>
                               </ScalePressable>
                             </Link>
-                            <LiquidGlassButton
+                            <AppButton
                               label={`Like (${review.likes_count})`}
                               variant="secondary"
                               size="sm"

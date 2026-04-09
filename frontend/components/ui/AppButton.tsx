@@ -15,14 +15,14 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-type LiquidGlassButtonVariant = 'primary' | 'secondary' | 'toggle' | 'destructive' | 'nav';
-type LiquidGlassButtonSize = 'sm' | 'md';
+type AppButtonVariant = 'primary' | 'secondary' | 'toggle' | 'destructive' | 'nav';
+type AppButtonSize = 'sm' | 'md';
 
-type LiquidGlassButtonProps = {
+type AppButtonProps = {
   label: string;
   onPress: () => void;
-  variant?: LiquidGlassButtonVariant;
-  size?: LiquidGlassButtonSize;
+  variant?: AppButtonVariant;
+  size?: AppButtonSize;
   disabled?: boolean;
   loading?: boolean;
   active?: boolean;
@@ -34,7 +34,7 @@ type LiquidGlassButtonProps = {
   testID?: string;
 };
 
-export function LiquidGlassButton({
+export function AppButton({
   label,
   onPress,
   variant = 'secondary',
@@ -48,7 +48,7 @@ export function LiquidGlassButton({
   style,
   textStyle,
   testID,
-}: LiquidGlassButtonProps) {
+}: AppButtonProps) {
   const isDisabled = disabled || loading;
   const shouldReduceMotion = useReducedMotionPreference();
   const [isFocused, setIsFocused] = useState(false);
@@ -131,18 +131,18 @@ export function LiquidGlassButton({
   );
 }
 
-const variantStyles: Record<LiquidGlassButtonVariant, ViewStyle> = StyleSheet.create({
+const variantStyles: Record<AppButtonVariant, ViewStyle> = StyleSheet.create({
   primary: {
     borderColor: DesignTokens.colors.inverseSurface,
     backgroundColor: DesignTokens.colors.inverseSurface,
   },
   secondary: {
     borderColor: DesignTokens.colors.border,
-    backgroundColor: 'rgba(255, 254, 252, 0.86)',
+    backgroundColor: DesignTokens.colors.surface,
   },
   toggle: {
     borderColor: DesignTokens.colors.border,
-    backgroundColor: 'rgba(241, 239, 234, 0.86)',
+    backgroundColor: DesignTokens.colors.surfaceMuted,
   },
   destructive: {
     borderColor: DesignTokens.colors.dangerText,
@@ -150,11 +150,11 @@ const variantStyles: Record<LiquidGlassButtonVariant, ViewStyle> = StyleSheet.cr
   },
   nav: {
     borderColor: DesignTokens.colors.border,
-    backgroundColor: 'rgba(241, 239, 234, 0.92)',
+    backgroundColor: DesignTokens.colors.surfaceMuted,
   },
 });
 
-const textVariantStyles: Record<LiquidGlassButtonVariant, TextStyle> = StyleSheet.create({
+const textVariantStyles: Record<AppButtonVariant, TextStyle> = StyleSheet.create({
   primary: {
     color: DesignTokens.colors.inverseText,
   },
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     color: DesignTokens.colors.inverseText,
   },
   emphasized: {
-    backgroundColor: 'rgba(241, 239, 234, 0.96)',
+    backgroundColor: DesignTokens.colors.surfaceMuted,
   },
   emphasizedInverted: {
     backgroundColor: DesignTokens.colors.inverseSurface,

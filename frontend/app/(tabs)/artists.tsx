@@ -1,4 +1,4 @@
-import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
+import { AppButton } from '@/components/ui/AppButton';
 import { ScalePressable } from '@/components/ui/ScalePressable';
 import { DesignTokens } from '@/constants/design-system';
 import { listArtists } from '@/lib/api';
@@ -77,7 +77,7 @@ export default function ArtistsScreen() {
               <Text style={styles.subtitle}>Browse profiles, inspect follow counts, and jump into any artist page.</Text>
             </View>
             {Platform.OS === 'web' ? (
-              <LiquidGlassButton label="Refresh" variant="secondary" size="sm" onPress={loadArtists} />
+              <AppButton label="Refresh" variant="secondary" size="sm" onPress={loadArtists} />
             ) : null}
           </View>
 

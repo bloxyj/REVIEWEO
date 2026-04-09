@@ -1,5 +1,5 @@
 import { BackNavButton } from '@/components/navigation/BackNavButton';
-import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
+import { AppButton } from '@/components/ui/AppButton';
 import { ScalePressable } from '@/components/ui/ScalePressable';
 import { DesignTokens } from '@/constants/design-system';
 import { getArtist, getArtistAlbums, getArtistTopTracks } from '@/lib/api';
@@ -113,7 +113,7 @@ export default function ArtistDetailScreen() {
         <View>
           <BackNavButton fallbackHref="/artists" label="Back to artists" />
           {Platform.OS === 'web' ? (
-            <LiquidGlassButton label="Refresh" variant="secondary" size="sm" onPress={loadData} />
+            <AppButton label="Refresh" variant="secondary" size="sm" onPress={loadData} />
           ) : null}
         </View>
 

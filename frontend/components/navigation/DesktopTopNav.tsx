@@ -1,4 +1,4 @@
-import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
+import { AppButton } from '@/components/ui/AppButton';
 import { DesignTokens } from '@/constants/design-system';
 import { useAuth } from '@/context/auth-context';
 import { getFilteredNavLinks, isActivePath, type NavLink } from '@/lib/nav-links';
@@ -43,7 +43,6 @@ export function DesktopTopNav({ pathname, isTouchDevice = false }: DesktopTopNav
         >
           <View style={styles.brandText}>
             <Text style={styles.brandTitle}>REVIEWEO</Text>
-            <Text style={styles.brandSubtitle}>Music ledger</Text>
           </View>
         </Pressable>
 
@@ -87,7 +86,7 @@ export function DesktopTopNav({ pathname, isTouchDevice = false }: DesktopTopNav
               <Text numberOfLines={1} style={styles.userText}>
                 {session.user.username}
               </Text>
-              <LiquidGlassButton label="Logout" variant="nav" size="sm" onPress={clearSession} />
+              <AppButton label="Logout" variant="nav" size="sm" onPress={clearSession} />
             </>
           ) : (
             <>

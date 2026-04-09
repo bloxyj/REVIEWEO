@@ -1,5 +1,5 @@
 import { BackNavButton } from '@/components/navigation/BackNavButton';
-import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
+import { AppButton } from '@/components/ui/AppButton';
 import { ScalePressable } from '@/components/ui/ScalePressable';
 import { DesignTokens } from '@/constants/design-system';
 import { API_BASE_URL } from '@/lib/config';
@@ -239,7 +239,7 @@ export default function CreateReviewScreen() {
             </View>
 
             <View style={styles.formActions}>
-              <LiquidGlassButton
+              <AppButton
                 label={loading ? 'Publishing...' : 'Publish review'}
                 variant="primary"
                 onPress={onSubmit}

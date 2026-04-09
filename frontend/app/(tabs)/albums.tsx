@@ -1,4 +1,4 @@
-import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
+import { AppButton } from '@/components/ui/AppButton';
 import { ScalePressable } from '@/components/ui/ScalePressable';
 import { DesignTokens } from '@/constants/design-system';
 import { listAlbums } from '@/lib/api';
@@ -89,7 +89,7 @@ export default function AlbumsScreen() {
               <Text style={styles.subtitle}>Filter by title or artist, then open a full album profile with tracks and reviews.</Text>
             </View>
             {Platform.OS === 'web' ? (
-              <LiquidGlassButton label="Refresh" variant="secondary" size="sm" onPress={loadAlbums} />
+              <AppButton label="Refresh" variant="secondary" size="sm" onPress={loadAlbums} />
             ) : null}
           </View>
 

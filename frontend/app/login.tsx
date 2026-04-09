@@ -1,5 +1,5 @@
 import { BackNavButton } from '@/components/navigation/BackNavButton';
-import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
+import { AppButton } from '@/components/ui/AppButton';
 import { ScalePressable } from '@/components/ui/ScalePressable';
 import { DesignTokens } from '@/constants/design-system';
 import { useAuth } from '@/context/auth-context';
@@ -121,7 +121,7 @@ export default function LoginScreen() {
               </View>
             ) : null}
 
-            <LiquidGlassButton
+            <AppButton
               label={loading ? 'Loading...' : 'Login'}
               variant="primary"
               onPress={onSubmit}

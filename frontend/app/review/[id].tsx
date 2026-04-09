@@ -1,5 +1,5 @@
 import { BackNavButton } from '@/components/navigation/BackNavButton';
-import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
+import { AppButton } from '@/components/ui/AppButton';
 import { ScalePressable } from '@/components/ui/ScalePressable';
 import { DesignTokens } from '@/constants/design-system';
 import { useAuth } from '@/context/auth-context';
@@ -156,7 +156,7 @@ export default function ReviewDetailScreen() {
         <View>
           <BackNavButton fallbackHref="/reviews" label="Back to reviews" />
           {Platform.OS === 'web' ? (
-            <LiquidGlassButton label="Refresh" variant="secondary" size="sm" onPress={loadReview} />
+            <AppButton label="Refresh" variant="secondary" size="sm" onPress={loadReview} />
           ) : null}
         </View>
 
@@ -231,7 +231,7 @@ export default function ReviewDetailScreen() {
                         <Text style={styles.openAlbumText}>Open album</Text>
                       </ScalePressable>
                     </Link>
-                    <LiquidGlassButton
+                    <AppButton
                       label={`Like (${review.likes_count})`}
                       variant="secondary"
                       size="sm"
@@ -294,14 +294,14 @@ export default function ReviewDetailScreen() {
                   </View>
 
                   <View style={styles.formActions}>
-                    <LiquidGlassButton
+                    <AppButton
                       label={saving ? 'Saving...' : 'Save changes'}
                       variant="primary"
                       size="sm"
                       onPress={onSave}
                       loading={saving}
                     />
-                    <LiquidGlassButton
+                    <AppButton
                       label="Delete review"
                       variant="destructive"
                       size="sm"

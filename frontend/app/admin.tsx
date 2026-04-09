@@ -1,5 +1,5 @@
 import { BackNavButton } from '@/components/navigation/BackNavButton';
-import { LiquidGlassButton } from '@/components/ui/LiquidGlassButton';
+import { AppButton } from '@/components/ui/AppButton';
 import { ScalePressable } from '@/components/ui/ScalePressable';
 import { DesignTokens } from '@/constants/design-system';
 import { useAuth } from '@/context/auth-context';
@@ -183,7 +183,7 @@ export default function AdminScreen() {
         <View>
           <BackNavButton />
           {Platform.OS === 'web' ? (
-            <LiquidGlassButton label="Refresh data" variant="secondary" size="sm" onPress={loadData} />
+            <AppButton label="Refresh data" variant="secondary" size="sm" onPress={loadData} />
           ) : null}
         </View>
 
@@ -275,13 +275,13 @@ export default function AdminScreen() {
                     <View style={styles.actionRow}>
                       {!isProtected ? (
                         <>
-                          <LiquidGlassButton
+                          <AppButton
                             label="Change role"
                             size="sm"
                             onPress={() => onUpdateRole(user)}
                             accessibilityLabel={`Change role for ${user.username}`}
                           />
-                          <LiquidGlassButton
+                          <AppButton
                             label="Delete"
                             variant="destructive"
                             size="sm"
@@ -347,14 +347,14 @@ export default function AdminScreen() {
                         <Text style={styles.inlineLinkText}>Open review</Text>
                       </ScalePressable>
                     </Link>
-                    <LiquidGlassButton
+                    <AppButton
                       label={review.is_pinned === 1 ? 'Unpin' : 'Pin'}
                       variant="toggle"
                       size="sm"
                       active={review.is_pinned === 1}
                       onPress={() => onTogglePin(review)}
                     />
-                    <LiquidGlassButton
+                    <AppButton
                       label="Delete"
                       variant="destructive"
                       size="sm"
