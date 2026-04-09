@@ -112,6 +112,7 @@ CREATE TABLE IF NOT EXISTS albums (
   release_year SMALLINT UNSIGNED NOT NULL,
   release_type ENUM('album','live_album','mixtape','ep','single','music_video','dj_mix','appears_on','compilation','bootleg','video','additional') NOT NULL DEFAULT 'album',
   collaborators VARCHAR(255) NULL,
+  cover_image VARCHAR(255) NULL,
   average_rating DECIMAL(3,2) NULL,
   ratings_count INT UNSIGNED NOT NULL DEFAULT 0,
   reviews_count INT UNSIGNED NOT NULL DEFAULT 0,

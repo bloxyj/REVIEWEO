@@ -58,7 +58,9 @@ final class AlbumController extends ApiController
 				return $this->error('limit must be an integer between 1 and 500.', 422);
 			}
 
-			return $this->success($this->albumModel->getAll($artistId, $releaseType, (int) $limit));
+			$albums = $this->albumModel->getAll($artistId, $releaseType, (int) $limit);
+
+			return $this->success($this->withAlbumCoverUrls($albums));
 		});
 	}
 
@@ -74,7 +76,7 @@ final class AlbumController extends ApiController
 				return $this->error('Album not found.', 404);
 			}
 
-			return $this->success($album);
+			return $this->success($this->withAlbumCoverUrl($album));
 		});
 	}
 

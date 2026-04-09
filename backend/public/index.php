@@ -10,6 +10,7 @@ use Src\Controllers\ArtistController;
 use Src\Controllers\AuthController;
 use Src\Controllers\ChartController;
 use Src\Controllers\CritiqueController;
+use Src\Controllers\ImageController;
 use Src\Controllers\LikeController;
 use Src\Controllers\ReviewController;
 use Src\Controllers\SearchController;
@@ -57,6 +58,18 @@ function routeRequest(array $segments, string $method, PDO $dbConnection): array
     if ($segments[0] === 'search' && $method === 'GET') {
         $searchController = new SearchController($dbConnection);
         return $searchController->index();
+    }
+
+    if ($segments[0] === 'images' && $method === 'GET') {
+        $imageController = new ImageController($dbConnection);
+
+        if (($segments[1] ?? '') === 'albums' && count($segments) === 3 && ctype_digit($segments[2])) {
+            return $imageController->album((int) $segments[2]);
+        }
+
+        if (($segments[1] ?? '') === 'kanye' && count($segments) === 3) {
+            return $imageController->kanye($segments[2]);
+        }
     }
 
     if ($segments[0] === 'charts' && $method === 'GET') {
@@ -152,7 +165,6 @@ function applyCorsHeaders(): void
 {
     $origin = $_SERVER['HTTP_ORIGIN'] ?? '*';
     header('Access-Control-Allow-Origin: ' . $origin);
-    header('Content-Type: application/json; charset=UTF-8');
     header('Access-Control-Allow-Methods: OPTIONS,GET,POST,PUT,DELETE');
     header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
     header('Access-Control-Max-Age: 3600');
@@ -162,5 +174,6 @@ function applyCorsHeaders(): void
 function sendJson(int $statusCode, array $payload): void
 {
     http_response_code($statusCode);
+    header('Content-Type: application/json; charset=UTF-8');
     echo json_encode($payload, JSON_UNESCAPED_UNICODE);
 }

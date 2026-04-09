@@ -69,12 +69,6 @@ docker compose down -v
 docker compose up --build
 ```
 
-To apply a new migration manually on an existing volume:
-
-```bash
-docker exec -i revieweo-mysql mysql -u revieweo -previeweo_password revieweo < backend/migrations/004_seed_album_reviews_mock_data.sql
-```
-
 ## Auth usage
 
 1. Register or login to get a token.

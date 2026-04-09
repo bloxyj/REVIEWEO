@@ -155,21 +155,24 @@ final class Artist
 	{
 		$query = '
 			SELECT
-				id,
-				title,
-				release_year,
-				release_type,
-				collaborators,
-				average_rating,
-				ratings_count,
-				reviews_count,
-				issues_count
-			FROM albums
-			WHERE artist_id = :artist_id
+				a.id,
+				a.title,
+				ar.name AS artist_name,
+				a.release_year,
+				a.release_type,
+				a.collaborators,
+				a.cover_image,
+				a.average_rating,
+				a.ratings_count,
+				a.reviews_count,
+				a.issues_count
+			FROM albums a
+			INNER JOIN artists ar ON ar.id = a.artist_id
+			WHERE a.artist_id = :artist_id
 		';
 
 		if ($releaseType !== null) {
-			$query .= ' AND release_type = :release_type';
+			$query .= ' AND a.release_type = :release_type';
 		}
 
 		$query .= ' ORDER BY release_year DESC, id DESC LIMIT :limit';

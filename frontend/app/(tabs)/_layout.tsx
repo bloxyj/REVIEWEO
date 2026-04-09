@@ -1,19 +1,11 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { DesignTokens } from '@/constants/design-system';
 import { Icon, Label, NativeTabs, VectorIcon } from 'expo-router/unstable-native-tabs';
-import { DynamicColorIOS, Platform } from 'react-native';
-
-const iosAdaptiveTint =
-  Platform.OS === 'ios'
-    ? DynamicColorIOS({
-        light: '#111111',
-        dark: '#ffffff',
-      })
-    : '#111111';
 
 export default function TabsLayout() {
   return (
     <NativeTabs
-      tintColor={iosAdaptiveTint}
+      tintColor={DesignTokens.colors.textPrimary}
       minimizeBehavior="onScrollDown"
       disableTransparentOnScrollEdge
     >
@@ -25,16 +17,8 @@ export default function TabsLayout() {
         />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="artists">
-        <Label>Artists</Label>
-        <Icon
-          sf={{ default: 'person.2', selected: 'person.2.fill' }}
-          androidSrc={<VectorIcon family={MaterialIcons} name="people" />}
-        />
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="albums">
-        <Label>Albums</Label>
+      <NativeTabs.Trigger name="reviews">
+        <Label>Reviews</Label>
         <Icon
           sf={{ default: 'rectangle.stack', selected: 'rectangle.stack.fill' }}
           androidSrc={<VectorIcon family={MaterialIcons} name="album" />}
@@ -45,7 +29,7 @@ export default function TabsLayout() {
         <Label>Settings</Label>
         <Icon
           sf={{ default: 'gear', selected: 'gear' }}
-          androidSrc={<VectorIcon family={MaterialIcons} name="settings" />}
+          androidSrc={<VectorIcon family={MaterialIcons} name="person" />}
         />
       </NativeTabs.Trigger>
 
