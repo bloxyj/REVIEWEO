@@ -1,116 +1,61 @@
 # REVIEWEO
 
-REVIEWEO is a full-stack project with:
+REVIEWEO is a full-stack music review platform. It combines an Expo frontend, a PHP REST API, and a MySQL catalog so users can discover artists and albums, publish reviews, like reviews, and explore charts.
 
-- frontend: Expo / React Native
-- backend: PHP 8.2 REST API (OOP)
-- database: MySQL 8.4
+## Architecture
 
-## API implementation status
+- Gateway: Nginx routes browser traffic and `/api/*` requests.
+- Frontend: Expo Router app for web and mobile clients.
+- Backend: PHP 8.2 REST API with JWT auth and admin moderation routes.
+- Database: MySQL 8.4 with SQL migrations.
 
-Implemented backend endpoints:
+## Documentation
 
-- POST /api/auth/register
-- POST /api/auth/login
-- POST /api/auth/logout
-- GET /api/critiques
-- GET /api/critiques/{id}
-- POST /api/critiques
-- PUT /api/critiques/{id}
-- DELETE /api/critiques/{id}
-- POST /api/likes/{id_critique}
-- GET /api/admin/users
-- DELETE /api/admin/critiques/{id}
-- POST /api/admin/pin/{id}
+- Backend API routes: [[backend/README.md]]
+- Frontend app routes: [[frontend/README.md]]
 
-Auth strategy: JWT Bearer token.
+## Prerequisites
 
-## Start the stack
+- Docker with Docker Compose v2 (recommended).
+- Node.js 22+ and npm (optional non-Docker frontend run).
+- PHP 8.2+ and MySQL 8+ (optional non-Docker backend run).
 
-From project root:
+## Install And Run Everything (Docker)
 
-```bash
-docker compose up --build
-```
+1. Review root `.env` and set secure values for:
 
-Default URLs:
+- `MYSQL_ROOT_PASSWORD`
+- `MYSQL_PASSWORD`
+- `JWT_SECRET`
 
-- Nginx gateway: <http://localhost:80> (this is only a gateway for port 80)
-- Frontend (Expo web): <http://localhost:19006>
-- API base URL from client perspective: <http://localhost/api>
-
-## Database initialization
-
-On a fresh database volume, MySQL now auto-runs migration files from
-`backend/migrations/` using `/docker-entrypoint-initdb.d`.
-
-Execution order is filename order:
-
-- `001_initial.sql`
-- `002_seed_music_mock_data.sql`
-- `003_release_reviews_and_discovery.sql`
-- `004_seed_album_reviews_mock_data.sql`
-
-Start the stack as usual:
+1. Start all services from the project root:
 
 ```bash
 docker compose up --build
 ```
 
-Important:
+## Database Bootstrap
 
-- Init scripts run only once when `mysql_data` is first created.
-- If you already have an existing DB volume, scripts do not rerun automatically.
+MySQL auto-runs files from `backend/migrations/` on first initialization of the `mysql_data` volume.
 
-To fully reinitialize local DB state:
+Execution order:
+
+1. `001_initial.sql`
+2. `002_seed_music_mock_data.sql`
+3. `003_release_reviews_and_discovery.sql`
+4. `004_seed_album_reviews_mock_data.sql`
+
+To fully reset local DB state and rerun all migrations:
 
 ```bash
 docker compose down -v
 docker compose up --build
 ```
 
-## Auth usage
+## Optional Run Expo for mobile and web
 
-1. Register or login to get a token.
-2. Send the token in protected requests:
-
-```http
-Authorization: Bearer <token>
-```
-
-Protected routes:
-
-- POST /api/critiques
-- PUT /api/critiques/{id}
-- DELETE /api/critiques/{id}
-- POST /api/likes/{id_critique}
-- all /api/admin/* routes
-- POST /api/auth/logout
-
-## Example response
-
-Request:
-
-```http
-GET /api/critiques/1
-```
-
-This is what the response looks like:
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "title": "Inception is a masterpiece",
-    "content": "Here is why this movie is amazing...",
-    "rating": 5,
-    "created_at": "2026-04-07 12:00:00",
-    "author": "Josh",
-    "likes_count": 10,
-    "is_pinned": 0,
-    "updated_at": "2026-04-07 12:00:00",
-    "user_id": 2
-  }
-}
+```bash
+cd frontend
+npm install
+npx expo start
 ```

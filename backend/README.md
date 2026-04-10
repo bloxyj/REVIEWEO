@@ -1,46 +1,13 @@
-# REVIEWEO Backend API
+# REVIEWEO Backend API Routes
 
-Base URL:
+Base API URL (through gateway):
 
 - <http://localhost/api>
 
-Important:
+All routes return JSON unless noted otherwise. Protected routes require:
 
-- Do not use port 3306 for API requests. Port 3306 is MySQL.
-
-## Database Setup
-
-- Base schema: `backend/migrations/001_initial.sql`
-- Mock music catalog seed: `backend/migrations/002_seed_music_mock_data.sql`
-- Release-linked reviews and likes schema: `backend/migrations/003_release_reviews_and_discovery.sql`
-- Mock release-linked reviews and likes seed: `backend/migrations/004_seed_album_reviews_mock_data.sql`
-
-With Docker Compose, MySQL auto-runs all migration files from `backend/migrations/`
-on first initialization of the `mysql_data` volume.
-
-Run order is filename order:
-
-1. `001_initial.sql`
-2. `002_seed_music_mock_data.sql`
-3. `003_release_reviews_and_discovery.sql`
-4. `004_seed_album_reviews_mock_data.sql`
-
-Start stack:
-
-```bash
-docker compose up --build
-```
-
-Important:
-
-- Auto-init scripts run only once for a fresh `mysql_data` volume.
-- Existing DB volumes are not reinitialized automatically.
-
-To reset local DB and rerun all migrations:
-
-```bash
-docker compose down -v
-docker compose up --build
+```http
+Authorization: Bearer <token>
 ```
 
 ## Health
@@ -90,8 +57,12 @@ These remain available for backward compatibility but are not release-linked.
 ## Admin
 
 - GET /api/admin/users (admin only)
+- PUT /api/admin/users/{id}/role (admin only)
+  - Required body: role (`user` | `critique` | `admin`)
+- DELETE /api/admin/users/{id} (admin only)
 - DELETE /api/admin/reviews/{id} (admin only)
 - POST /api/admin/pin/{id} (admin only)
+  - Optional body: is_pinned (boolean, default true)
 
 Legacy admin review deletion alias remains available:
 
@@ -131,7 +102,7 @@ Album payloads now include:
 
 - GET /api/search
   - Required query param: q
-  - Optional query params: type (all|artists|albums), limit
+  - Optional query params: type (all|artists|albums|tracks), limit
 
 ## Charts
 

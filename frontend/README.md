@@ -1,60 +1,31 @@
-# REVIEWEO Frontend
+# REVIEWEO Frontend Routes
 
-Minimal Expo frontend for REVIEWEO, designed for both web and mobile.
+This document lists the Expo Router paths exposed by the frontend app.
 
-The UI is intentionally simple: black text on white background with layout-only styling.
+## Tab Routes
 
-## Setup
-
-1. Install dependencies
-
-```bash
-npm install
-```
-
-1. Configure API base URL
-
-```bash
-cp .env.example .env
-```
-
-Set `EXPO_PUBLIC_API_BASE_URL` in `.env`:
-
-- Web local: `http://localhost/api`
-- Physical phone: `http://<YOUR_LAN_IP>/api`
-
-1. Start the app
-
-```bash
-npm run start
-```
-
-Use `npm run web`, `npm run ios`, or `npm run android` for a specific target.
+- `/` Home feed
+- `/reviews` Reviews feed
+- `/create-review` Create review tab
+- `/artists` Artists list
+- `/albums` Albums list
+- `/search` Search screen
+- `/settings` Settings
 
 ## Routes
 
-- `/` Home
 - `/login` Login
 - `/register` Register
-- `/artists` Artists list
-- `/artist/[id]` Artist detail
-- `/albums` Albums list
+- `/charts` Charts
+- `/admin` Admin panel
 - `/album/[id]` Album detail + reviews
-- `/reviews` Reviews list
+- `/artist/[id]` Artist detail
 - `/review/[id]` Review detail
-- `/search` Search (artists/albums)
-- `/charts` Top-rated charts (year/genre/release_type filters)
-- `/admin` Admin users + review moderation
+- `/review/create` Review creation form
 
-## API Coverage
+## Route Notes
 
-Frontend is connected to backend endpoints for:
-
-- Authentication (`/auth/*`)
-- Artists (`/artists/*`)
-- Albums (`/albums/*`)
-- Release-linked reviews (`/reviews`, `/albums/{id}/reviews`)
-- Likes (`/likes/{id_review}`)
-- Admin moderation (`/admin/users`, `/admin/reviews/{id}`, `/admin/pin/{id}`)
-- Search (`/search`)
-- Charts (`/charts`)
+- `(tabs)` is a route group and is not part of the URL.
+- Search supports query parameters on `/search`.
+- Example: `/search?q=graduation`
+- Example: `/search?q=ye&type=artists`
