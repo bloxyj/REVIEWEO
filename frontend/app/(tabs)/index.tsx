@@ -159,30 +159,6 @@ export default function HomeScreen() {
         <View>
           <View style={styles.brandText}>
             <Text style={styles.brandEyebrow}>REVIEWEO</Text>
-            <Text style={styles.brandMeta}>Music catalog and ratings</Text>
-          </View>
-
-          <View style={styles.quickActionsRow}>
-            <Link href="/charts" asChild>
-              <ScalePressable containerStyle={fluidQuickActionItemStyle} contentStyle={styles.quickActionCard}>
-                <Text style={styles.quickActionTitle}>Charts</Text>
-                <Text style={styles.quickActionMeta}>Top-rated records right now</Text>
-              </ScalePressable>
-            </Link>
-
-            <Link href="/reviews" asChild>
-              <ScalePressable containerStyle={fluidQuickActionItemStyle} contentStyle={styles.quickActionCard}>
-                <Text style={styles.quickActionTitle}>Reviews</Text>
-                <Text style={styles.quickActionMeta}>Fresh writing from listeners</Text>
-              </ScalePressable>
-            </Link>
-
-            <Link href="/search" asChild>
-              <ScalePressable containerStyle={fluidQuickActionItemStyle} contentStyle={styles.quickActionCard}>
-                <Text style={styles.quickActionTitle}>Search</Text>
-                <Text style={styles.quickActionMeta}>Artists, albums, and deep cuts</Text>
-              </ScalePressable>
-            </Link>
           </View>
         </View>
 

@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
     color: DesignTokens.colors.textPrimary,
   },
   searchArea: {
-    minWidth: 250,
+    minWidth: 50,
     maxWidth: 520,
     flexDirection: 'row',
     alignItems: 'center',
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
   },
   searchAreaFullWidth: {
     width: '100%',
-    minWidth: 0,
+    minWidth: '50%',
     maxWidth: '100%',
   },
   searchInput: {
