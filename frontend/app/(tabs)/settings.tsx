@@ -9,23 +9,6 @@ import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-const BROWSE_LINKS = [
-  {
-    label: 'Charts',
-    description: 'See top-rated albums by filters and community score.',
-    href: '/charts',
-  },
-  {
-    label: 'Search catalog',
-    description: 'Jump to artists and albums in one query.',
-    href: '/search',
-  },
-  {
-    label: 'Community reviews',
-    description: 'Read the latest listener and critic write-ups.',
-    href: '/reviews',
-  },
-] as const;
 
 export default function SettingsScreen() {
   const { session, clearSession } = useAuth();
@@ -48,7 +31,7 @@ export default function SettingsScreen() {
         <View>
           <Text style={styles.eyebrow}>Account</Text>
           <Text style={styles.title}>Settings</Text>
-          <Text style={styles.subtitle}>Manage your session, account shortcuts, and profile controls from one place.</Text>
+          <Text style={styles.subtitle}>Manage your account settings and preferences.</Text>
         </View>
 
         <View>
@@ -93,24 +76,6 @@ export default function SettingsScreen() {
           )}
         </View>
 
-        <View>
-          <Text style={styles.sectionTitle}>Browse</Text>
-          <View style={styles.linkGrid}>
-            {BROWSE_LINKS.map((item, index) => (
-              <View
-                key={item.label}
-                style={fluidLinkItemStyle}
-              >
-                <Link href={item.href} asChild>
-                  <ScalePressable contentStyle={styles.linkCard}>
-                    <Text style={styles.linkLabel}>{item.label}</Text>
-                    <Text style={styles.linkDescription}>{item.description}</Text>
-                  </ScalePressable>
-                </Link>
-              </View>
-            ))}
-          </View>
-        </View>
       </View>
     </ScrollView>
   );

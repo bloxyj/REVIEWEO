@@ -2,22 +2,17 @@ import { BackNavButton } from '@/components/navigation/BackNavButton';
 import { AppButton } from '@/components/ui/AppButton';
 import { ScalePressable } from '@/components/ui/ScalePressable';
 import { DesignTokens } from '@/constants/design-system';
-import { API_BASE_URL } from '@/lib/config';
 import { useAuth } from '@/context/auth-context';
 import { createAlbumReview } from '@/lib/api';
-import { getAlbumCoverPlaceholder, getUserAvatarPlaceholder } from '@/lib/placeholders';
 import { useResponsiveLayout } from '@/lib/responsive';
-import { useReducedMotionPreference } from '@/lib/use-reduced-motion';
-import { Image } from 'expo-image';
 import { Link, useRouter } from 'expo-router';
-import { useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Alert, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function CreateReviewScreen() {
   const router = useRouter();
-  const { session, isAdmin } = useAuth();
-  const { isDesktop, contentMaxWidth, horizontalPadding } = useResponsiveLayout();
-  const shouldReduceMotion = useReducedMotionPreference();
+  const { session } = useAuth();
+  const { contentMaxWidth, horizontalPadding } = useResponsiveLayout();
 
   const [albumId, setAlbumId] = useState('');
   const [title, setTitle] = useState('');
@@ -28,27 +23,6 @@ export default function CreateReviewScreen() {
   const titleInputRef = useRef<TextInput | null>(null);
   const ratingInputRef = useRef<TextInput | null>(null);
   const contentInputRef = useRef<TextInput | null>(null);
-
-  const reviewerId = session?.user.id ?? 0;
-  const reviewerName = session?.user.username ?? 'revieweo';
-  const isCritique = session?.user.role === 'critique';
-
-  const parsedAlbumId = Number(albumId);
-  const hasValidAlbumId = Number.isInteger(parsedAlbumId) && parsedAlbumId > 0;
-  const previewTitle = title.trim() === '' ? 'Untitled Review' : title.trim();
-
-  const coverPreview = useMemo(() => {
-    if (hasValidAlbumId) {
-      return `${API_BASE_URL}/images/albums/${parsedAlbumId}`;
-    }
-
-    return getAlbumCoverPlaceholder(0, previewTitle, reviewerName);
-  }, [hasValidAlbumId, parsedAlbumId, previewTitle, reviewerName]);
-
-  const reviewerPreview = useMemo(
-    () => getUserAvatarPlaceholder(reviewerId, reviewerName),
-    [reviewerId, reviewerName]
-  );
 
   const onSubmit = async () => {
     if (loading) {
@@ -95,31 +69,6 @@ export default function CreateReviewScreen() {
     }
   };
 
-  if (!isAdmin && !isCritique) {
-    return (
-      <ScrollView
-        style={styles.screen}
-        contentContainerStyle={[styles.container, { paddingHorizontal: horizontalPadding }]}
-      >
-        <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
-          <View>
-            <BackNavButton fallbackHref="/reviews" label="Back to reviews" />
-          </View>
-
-          <View>
-            <Text style={styles.accessTitle}>Access denied</Text>
-            <Text style={styles.accessText}>Only critics and admins can write reviews.</Text>
-            <Link href="/reviews" asChild>
-              <ScalePressable contentStyle={styles.inlineLinkCard} accessibilityRole="link">
-                <Text style={styles.inlineLinkText}>Browse published reviews</Text>
-              </ScalePressable>
-            </Link>
-          </View>
-        </View>
-      </ScrollView>
-    );
-  }
-
   return (
     <ScrollView
       style={styles.screen}
@@ -129,38 +78,6 @@ export default function CreateReviewScreen() {
       <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
         <View>
           <BackNavButton fallbackHref="/reviews" label="Back to reviews" />
-        </View>
-
-        <View>
-          <View style={[styles.heroCard, isDesktop ? styles.heroDesktop : styles.heroMobile]}>
-            <Image
-              source={{ uri: coverPreview }}
-              style={[styles.heroImage, isDesktop ? styles.heroImageDesktop : null]}
-              contentFit="cover"
-              transition={shouldReduceMotion ? 0 : 220}
-            />
-            <View style={styles.heroBody}>
-              <Text style={styles.heroEyebrow}>Editorial review</Text>
-              <Text style={styles.heroTitle}>Write a review</Text>
-              <Text style={styles.heroSubtitle}>
-                Publish a full write-up and score for a specific album. Your review will appear immediately in the
-                public feed.
-              </Text>
-
-              <View style={styles.authorRow}>
-                <Image
-                  source={{ uri: reviewerPreview }}
-                  style={styles.authorAvatar}
-                  contentFit="cover"
-                  transition={shouldReduceMotion ? 0 : 120}
-                />
-                <View style={styles.authorBody}>
-                  <Text style={styles.authorName}>{reviewerName}</Text>
-                  <Text style={styles.authorMeta}>{session?.user.role ?? 'critic'}</Text>
-                </View>
-              </View>
-            </View>
-          </View>
         </View>
 
         {error ? (
@@ -273,92 +190,6 @@ const styles = StyleSheet.create({
     width: '100%',
     gap: DesignTokens.spacing.xl,
   },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: DesignTokens.spacing.sm,
-  },
-  section: {
-    gap: DesignTokens.spacing.md,
-  },
-  heroCard: {
-    borderWidth: 1,
-    borderColor: DesignTokens.colors.border,
-    borderRadius: DesignTokens.radius.lg,
-    backgroundColor: DesignTokens.colors.surface,
-    overflow: 'hidden',
-    padding: DesignTokens.spacing.lg,
-    gap: DesignTokens.spacing.lg,
-  },
-  heroDesktop: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-  },
-  heroMobile: {
-    flexDirection: 'column',
-  },
-  heroImage: {
-    width: '100%',
-    aspectRatio: 1,
-    borderRadius: DesignTokens.radius.md,
-  },
-  heroImageDesktop: {
-    width: 280,
-  },
-  heroBody: {
-    flex: 1,
-    gap: DesignTokens.spacing.sm,
-  },
-  heroEyebrow: {
-    color: DesignTokens.colors.textMuted,
-    fontSize: DesignTokens.typography.meta,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.7,
-  },
-  heroTitle: {
-    color: DesignTokens.colors.textPrimary,
-    fontSize: DesignTokens.typography.h1,
-    fontWeight: '700',
-    lineHeight: 36,
-    letterSpacing: -0.7,
-  },
-  heroSubtitle: {
-    color: DesignTokens.colors.textSecondary,
-    fontSize: DesignTokens.typography.bodySmall,
-    lineHeight: 22,
-  },
-  authorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: DesignTokens.spacing.sm,
-    marginTop: DesignTokens.spacing.xs,
-  },
-  authorAvatar: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-  },
-  authorBody: {
-    gap: 1,
-  },
-  authorName: {
-    color: DesignTokens.colors.textPrimary,
-    fontSize: DesignTokens.typography.bodySmall,
-    fontWeight: '700',
-  },
-  authorMeta: {
-    color: DesignTokens.colors.textMuted,
-    fontSize: DesignTokens.typography.meta,
-  },
-  errorBanner: {
-    borderWidth: 1,
-    borderColor: DesignTokens.colors.dangerSurface,
-    borderRadius: DesignTokens.radius.md,
-    backgroundColor: DesignTokens.colors.dangerSurface,
-    padding: DesignTokens.spacing.md,
-  },
   errorText: {
     color: DesignTokens.colors.dangerText,
     fontSize: DesignTokens.typography.bodySmall,
@@ -427,24 +258,5 @@ const styles = StyleSheet.create({
     color: DesignTokens.colors.textPrimary,
     fontSize: DesignTokens.typography.meta,
     fontWeight: '600',
-  },
-  accessCard: {
-    borderWidth: 1,
-    borderColor: DesignTokens.colors.border,
-    borderRadius: DesignTokens.radius.md,
-    backgroundColor: DesignTokens.colors.surface,
-    padding: DesignTokens.spacing.lg,
-    gap: DesignTokens.spacing.sm,
-  },
-  accessTitle: {
-    color: DesignTokens.colors.textPrimary,
-    fontSize: DesignTokens.typography.h2,
-    fontWeight: '700',
-    letterSpacing: -0.5,
-  },
-  accessText: {
-    color: DesignTokens.colors.textSecondary,
-    fontSize: DesignTokens.typography.bodySmall,
-    lineHeight: 22,
   },
 });

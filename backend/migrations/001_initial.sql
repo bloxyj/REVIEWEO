@@ -149,4 +149,5 @@ VALUES ('LeBoss', 'admin@revieweo.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9
 
 -- Compte Critique (Mdp: password)
 INSERT IGNORE INTO users (username, email, password_hash, role) 
-VALUES ('LoeilDeLynx', 'critique@revieweo.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'critique');
+VALUES ('leSang', 'critique@revieweo.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'critique');
+

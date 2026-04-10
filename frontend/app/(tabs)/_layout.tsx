@@ -25,6 +25,14 @@ export default function TabsLayout() {
         />
       </NativeTabs.Trigger>
 
+      <NativeTabs.Trigger name="create-review">
+        <Label>Write</Label>
+        <Icon
+          sf={{ default: 'square.and.pencil', selected: 'square.and.pencil' }}
+          androidSrc={<VectorIcon family={MaterialIcons} name="edit" />}
+        />
+      </NativeTabs.Trigger>
+
       <NativeTabs.Trigger name="settings">
         <Label>Settings</Label>
         <Icon

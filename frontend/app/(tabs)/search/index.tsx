@@ -158,11 +158,8 @@ export default function SearchScreen() {
           <View>
             <Text style={styles.eyebrow}>Lookup</Text>
             <Text style={styles.title}>Search catalog</Text>
-            <Text style={styles.subtitle}>Find songs, artists, and albums in one pass, then jump to details.</Text>
-            {isIOS || Platform.OS === 'web' ? (
-              <Text style={styles.searchHint}>Use the search bar in navigation to run a query.</Text>
-            ) : null}
-            {query !== '' ? <Text style={styles.searchHint}>Showing results for “{query}”.</Text> : null}
+            <Text style={styles.subtitle}></Text>
+            {query !== '' ? <Text style={styles.searchHint}>Hit enter to search for “{query}”.</Text> : null}
             {loading ? <Text style={styles.searchHint}>Searching...</Text> : null}
           </View>
 
@@ -309,12 +306,7 @@ export default function SearchScreen() {
                 )}
               </View>
             </>
-          ) : (
-            <View>
-              <Text style={styles.emptyTitle}>Start with a search query</Text>
-              <Text style={styles.emptyText}>Results for songs, artists, and albums will appear after your first search.</Text>
-            </View>
-          )}
+          ) : null}
         </View>
       </ScrollView>
     </>
