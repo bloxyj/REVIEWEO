@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
     minWidth: 170,
   },
   backButtonMobile: {
-    alignSelf: 'stretch',
+    alignSelf: 'flex-start',
   },
   backButtonMatchActionText: {
     fontSize: DesignTokens.typography.bodySmall,

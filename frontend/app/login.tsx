@@ -64,8 +64,8 @@ export default function LoginScreen() {
               <BackNavButton
                 fallbackHref="/"
                 label="Back"
-                style={styles.backButtonCompact}
-                textStyle={styles.backButtonCompactText}
+                style={[styles.backButtonMatchAction, isDesktop ? styles.backButtonDesktop : styles.backButtonMobile]}
+                textStyle={styles.backButtonMatchActionText}
               />
             </View>
 
@@ -210,15 +210,21 @@ const styles = StyleSheet.create({
     fontSize: DesignTokens.typography.body,
     lineHeight: 22,
   },
-  backButtonCompact: {
-    alignSelf: 'flex-start',
-    minHeight: 36,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: DesignTokens.radius.sm,
+  backButtonMatchAction: {
+    minHeight: 44,
+    borderRadius: DesignTokens.radius.md,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
   },
-  backButtonCompactText: {
-    fontSize: DesignTokens.typography.meta,
+  backButtonDesktop: {
+    alignSelf: 'flex-start',
+    minWidth: 170,
+  },
+  backButtonMobile: {
+    alignSelf: 'flex-start',
+  },
+  backButtonMatchActionText: {
+    fontSize: DesignTokens.typography.bodySmall,
     fontWeight: '600',
   },
   formSection: {
